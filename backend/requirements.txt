@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+yfinance
+sqlalchemy
+pydantic
+python-dotenv
