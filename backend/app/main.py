@@ -23,6 +23,10 @@ def get_stocks():
     stocks = get_top_stocks()
     return stocks
 
+@app.get("/api/benchmark")
+def get_benchmark(sector: str = Query("top25")):
+    return get_benchmark_data(sector)
+
 from pydantic import BaseModel
 
 class BacktestRequest(BaseModel):
