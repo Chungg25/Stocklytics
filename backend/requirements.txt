@@ -4,3 +4,6 @@ yfinance
 sqlalchemy
 pydantic
 python-dotenv
+openai
+ta
+pandas
