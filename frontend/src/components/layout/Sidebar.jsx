@@ -10,7 +10,7 @@ const navItems = [
   { icon: Briefcase, label: 'PORTFOLIO', id: 'portfolio', path: '/portfolio' },
   { icon: Eye, label: 'WATCHLIST', id: 'watchlist', path: '/watchlist' },
   { icon: Filter, label: 'SCREENERS', id: 'screeners', path: '/screeners' },
-  { icon: List, label: 'MY SCREENS', id: 'my-screens', path: '/my-screens' },
+  { icon: List, label: 'COMPARE', id: 'compare', path: '/compare' },
   { icon: BarChart2, label: 'SIGNALS', id: 'signals', path: '/signals' },
   { icon: Bitcoin, label: 'CRYPTO SIG', id: 'crypto-sig', path: '/crypto-sig' },
   { icon: Globe, label: 'FOREX', id: 'forex', path: '#' },

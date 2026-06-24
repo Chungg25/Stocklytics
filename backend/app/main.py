@@ -43,3 +43,19 @@ def run_strategy_backtest(req: BacktestRequest):
         return {"status": "success", "data": result}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+class CompareRequest(BaseModel):
+    tickers: list[str]
+    timeframe: str
+    indicators: list[str]
+
+@app.post("/api/compare")
+def run_compare(req: CompareRequest):
+    try:
+        from app.services.compare_service import get_compare_data
+        data = get_compare_data(req.tickers, req.timeframe, req.indicators)
+        return {"status": "success", "data": data}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}

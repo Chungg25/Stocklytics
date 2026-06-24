@@ -95,7 +95,6 @@ def get_stock_data(ticker_symbol):
         return None
 
 def get_top_stocks():
-    # Top 50 cổ phiếu Mỹ (Tech, Finance, Healthcare, Retail, v.v.)
     tickers = [
         "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "BRK-B", "LLY", "AVGO", "TSLA",
         "JPM", "UNH", "V", "XOM", "MA", "JNJ", "PG", "HD", "COST", "ABBV",
@@ -105,24 +104,19 @@ def get_top_stocks():
     ]
     results = []
     
-    # Dùng 10 workers để không bị Yahoo Finance khóa IP do gọi quá dồn dập
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_ticker = {executor.submit(get_stock_data, t): t for t in tickers}
         for future in concurrent.futures.as_completed(future_to_ticker):
             data = future.result()
             if data:
                 results.append(data)
-                
-    # Sắp xếp lại theo Market Cap (do chạy bất đồng bộ nên thứ tự bị lộn xộn)
-    # Market Cap trả về là chuỗi (VD: "2.90T"), ta cần sort theo chiều giảm dần giá trị gốc
-    # Tạm thời sort theo Alphabet của Ticker hoặc ID
+
     results.sort(key=lambda x: x['id'])
     
     return results
 
 def get_benchmark_data(sector_name=""):
     try:
-        # Ánh xạ từ sector_name ra danh sách các cổ phiếu "tốt nhất" (Top stocks) của ngành
         category_map = {
             "top25": ["NVDA", "MSFT", "AAPL", "AMZN", "META"],
             "technology": ["AAPL", "MSFT", "NVDA", "AVGO", "CSCO"],
@@ -134,7 +128,6 @@ def get_benchmark_data(sector_name=""):
         }
         top_tickers = category_map.get(sector_name, ["AAPL", "MSFT", "GOOGL"])
         
-        # Fetch S&P 500 index và các Top Tickers
         tickers_str = "^GSPC " + " ".join(top_tickers)
         data = yf.Tickers(tickers_str)
         hist = data.history(start="2021-01-01", interval="1mo")
@@ -142,7 +135,6 @@ def get_benchmark_data(sector_name=""):
         if hist.empty:
             return []
 
-        # Extract Close prices
         try:
             sp500_close = hist["Close"]["^GSPC"]
             stock_closes = {t: hist["Close"][t] for t in top_tickers if t in hist["Close"]}
@@ -151,7 +143,6 @@ def get_benchmark_data(sector_name=""):
 
         sp500_start = clean_float(sp500_close.dropna().iloc[0]) if not sp500_close.dropna().empty else None
         
-        # Get start prices for all valid stocks
         stock_starts = {}
         for t, close_series in stock_closes.items():
             start_val = clean_float(close_series.dropna().iloc[0]) if not close_series.dropna().empty else None
@@ -167,7 +158,6 @@ def get_benchmark_data(sector_name=""):
                 
             sp500_pct = ((s_price - sp500_start) / sp500_start) * 100
             
-            # Tính trung bình % tăng trưởng của nhóm các cổ phiếu "best" này
             sector_pcts = []
             for t, close_series in stock_closes.items():
                 if t in stock_starts:
