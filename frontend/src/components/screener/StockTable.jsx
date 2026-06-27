@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Star, Bell, Copy, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 
@@ -70,8 +70,9 @@ const StockTableRow = ({ stock }) => {
   );
 };
 
-const StockTable = ({ stocks, loading }) => {
+const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleSort = (key) => {
     let direction = 'desc';
@@ -121,8 +122,18 @@ const StockTable = ({ stocks, loading }) => {
     return sortableItems;
   }, [stocks, sortConfig]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(sortedStocks.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedStocks = sortedStocks.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when stocks change or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [stocks, sortConfig]);
+
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto flex flex-col">
       <table className="w-full text-left text-sm whitespace-nowrap">
         <thead className="bg-[#151C2C] border-b-2 border-dark-border">
           <tr className="text-text-muted text-xs uppercase tracking-wider select-none">
@@ -159,12 +170,68 @@ const StockTable = ({ stocks, loading }) => {
           {loading ? (
             <tr><td colSpan="9" className="text-center py-8 text-text-muted">Loading data...</td></tr>
           ) : (
-            sortedStocks.map(stock => (
+            paginatedStocks.map(stock => (
               <StockTableRow key={stock.ticker || stock.id} stock={stock} />
             ))
           )}
         </tbody>
       </table>
+      
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-4 border-t-2 border-dark-border bg-[#151C2C]">
+          <div className="text-sm text-text-muted">
+            Showing <span className="text-white font-medium">{startIndex + 1}</span> to <span className="text-white font-medium">{Math.min(startIndex + itemsPerPage, sortedStocks.length)}</span> of <span className="text-white font-medium">{sortedStocks.length}</span> entries
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm rounded-md border border-dark-border bg-dark-bg text-text-primary hover:text-white hover:bg-dark-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`min-w-[32px] h-8 flex items-center justify-center rounded-md text-sm transition-colors ${
+                        currentPage === page 
+                          ? 'bg-primary text-white border-primary font-medium border' 
+                          : 'bg-transparent text-text-muted hover:text-white hover:bg-dark-hover border-transparent hover:border-dark-border border'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                if (
+                  (page === 2 && currentPage > 3) ||
+                  (page === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return <span key={page} className="text-text-muted px-1">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm rounded-md border border-dark-border bg-dark-bg text-text-primary hover:text-white hover:bg-dark-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -134,7 +134,7 @@ const ScreenerDetailPage = () => {
       {/* Table Section */}
       <h2 className="text-2xl font-bold text-white mb-6">{category.title}</h2>
       <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden">
-        <StockTable stocks={displayedStocks} loading={loading} />
+        <StockTable stocks={displayedStocks} loading={loading} itemsPerPage={8} />
       </div>
     </PageLayout>
   );

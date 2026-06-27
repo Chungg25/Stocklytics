@@ -96,15 +96,27 @@ def get_stock_data(ticker_symbol):
 
 def get_top_stocks():
     tickers = [
-        "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "BRK-B", "LLY", "AVGO", "TSLA",
-        "JPM", "UNH", "V", "XOM", "MA", "JNJ", "PG", "HD", "COST", "ABBV",
-        "MRK", "CRM", "BAC", "CVX", "NFLX", "KO", "PEP", "WMT", "TMO", "AMD",
-        "MCD", "DIS", "CSCO", "ABNB", "INTU", "QCOM", "AMAT", "IBM", "TXN", "NOW",
-        "GE", "CAT", "UBER", "INTC", "PFE", "NKE", "BA", "HON", "SBUX", "VZ"
+        # Tech & Communication
+        "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "CSCO", "CRM",
+        "ADBE", "NFLX", "INTC", "AMD", "TXN", "QCOM", "INTU", "IBM", "AMAT", "NOW",
+        "UBER", "ABNB", "ORCL", "PANW", "SNPS", "CDNS", "KLAC", "MU", "LRCX", "ADI",
+        # Financials
+        "JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "AXP", "C", "BLK",
+        "SPGI", "BX", "PGR", "CB", "MMC", "CME", "SCHW", "AON", "ICE", "MCO",
+        # Healthcare
+        "LLY", "UNH", "JNJ", "ABBV", "MRK", "TMO", "PFE", "DHR", "ISRG", "SYK",
+        "MDT", "VRTX", "REGN", "ELV", "BSX", "ZTS", "CI", "GILD", "CVS", "BDX",
+        # Consumer
+        "WMT", "PG", "HD", "COST", "KO", "PEP", "MCD", "NKE", "SBUX", "TGT",
+        "LOW", "TJX", "MO", "PM", "EL", "CL", "KMB", "GIS", "SYY", "DG",
+        # Industrials & Energy & Others
+        "BRK-B", "XOM", "CVX", "GE", "CAT", "BA", "HON", "VZ", "T", "NEE",
+        "COP", "SLB", "EOG", "PXD", "MPC", "PSX", "VLO", "OXY", "HES", "HAL",
+        "RTX", "UNP", "UPS", "LMT", "DE", "WM", "GD", "NSC", "NOC", "CSX"
     ]
     results = []
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         future_to_ticker = {executor.submit(get_stock_data, t): t for t in tickers}
         for future in concurrent.futures.as_completed(future_to_ticker):
             data = future.result()
