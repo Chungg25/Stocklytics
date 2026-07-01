@@ -44,6 +44,15 @@ def run_strategy_backtest(req: BacktestRequest):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.post("/api/scan-signals")
+def trigger_scan():
+    try:
+        from app.services.scanner_service import run_daily_scan
+        result = run_daily_scan()
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 class CompareRequest(BaseModel):
     tickers: list[str]
     timeframe: str
