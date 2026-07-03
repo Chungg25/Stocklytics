@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from zhipuai import ZhipuAI
+# from zhipuai import ZhipuAI
 from openai import OpenAI
 
 load_dotenv()
