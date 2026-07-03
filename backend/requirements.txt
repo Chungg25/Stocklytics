@@ -8,3 +8,4 @@ openai
 ta
 pandas
 matplotlib
+scipy

@@ -1,16 +1,15 @@
 import os
-import io
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 import yfinance as yf
 import pandas as pd
-from dotenv import load_dotenv
-
-import matplotlib
-matplotlib.use('Agg')
+import numpy as np
 import matplotlib.pyplot as plt
+import io
+from scipy.signal import find_peaks
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -23,41 +22,56 @@ SEMICONDUCTOR_STOCKS = [
     "AMD", "MU", "INTC", "NVDA"
 ]
 
-def generate_chart(df, ticker, signal_type):
-    plt.figure(figsize=(8, 4))
+def cluster_levels(levels, threshold_pct=0.03, min_touches=2):
+    levels = sorted(levels)
+    if not levels: return []
+    zones = []
+    current_zone = [levels[0]]
+    for lvl in levels[1:]:
+        if (lvl - current_zone[0]) / current_zone[0] <= threshold_pct:
+            current_zone.append(lvl)
+        else:
+            if len(current_zone) >= min_touches:
+                zones.append((min(current_zone), max(current_zone)))
+            current_zone = [lvl]
+    if len(current_zone) >= min_touches:
+        zones.append((min(current_zone), max(current_zone)))
+    return zones
+
+def generate_chart(df, ticker, active_res, active_sup):
+    plt.figure(figsize=(10, 6))
     
-    # Plot last 30 days if available
-    plot_df = df.tail(30)
+    # Plot last 60 days
+    plot_df = df.tail(60)
     
-    plt.plot(plot_df.index, plot_df['Close'], label='Close Price', color='blue', linewidth=2)
-    plt.plot(plot_df.index, plot_df['SMA_9'], label='9-Day SMA', color='orange', linestyle='--')
+    plt.plot(plot_df.index, plot_df['Close'], label='Close Price', color='blue')
     
-    # Mark the last point
-    last_date = plot_df.index[-1]
-    last_close = plot_df['Close'].iloc[-1]
-    marker_color = 'green' if signal_type == 'BUY' else 'red'
-    plt.scatter(last_date, last_close, color=marker_color, s=100, zorder=5)
+    # Draw only the ACTIVE zones that are relevant to the current price
+    if active_res:
+        plt.axhspan(active_res[0], active_res[1], color='red', alpha=0.3, label='Active Resistance')
+        
+    if active_sup:
+        plt.axhspan(active_sup[0], active_sup[1], color='green', alpha=0.3, label='Active Support')
     
-    plt.title(f"{ticker} - Daily Chart - {signal_type} Signal")
-    plt.xlabel('Date')
-    plt.ylabel('Price')
+    plt.title(f"{ticker} - Daily Chart & Active S/R Zones")
+    plt.xlabel("Time")
+    plt.ylabel("Price")
     plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
+    plt.grid(True)
     
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=100)
-    buf.seek(0)
+    plt.savefig(buf, format='png')
     plt.close()
-    
-    return buf.read()
+    buf.seek(0)
+    return buf.getvalue()
 
-def get_9_sma_signals():
+def get_signals():
     buy_signals = []
     sell_signals = []
+    charts_data = {}
     
-    # Download 40 days to safely calculate 9-SMA and have 30 days for plot
-    data = yf.download(SEMICONDUCTOR_STOCKS, period="40d", threads=True)
+    # 1 year of data for sufficient pivot points
+    data = yf.download(SEMICONDUCTOR_STOCKS, period="1y", interval="1d", threads=True)
     
     is_multiindex = isinstance(data.columns, pd.MultiIndex)
     
@@ -65,55 +79,89 @@ def get_9_sma_signals():
         try:
             if is_multiindex:
                 if 'Close' in data.columns.levels[0]:
-                    if ticker not in data['Close'].columns: continue
+                    if ticker not in data['Close'].columns:
+                        continue
                     close_prices = data['Close'][ticker].dropna()
+                    high_prices = data['High'][ticker].dropna()
+                    low_prices = data['Low'][ticker].dropna()
                 else:
-                    if ticker not in data.columns.levels[0]: continue
+                    if ticker not in data.columns.levels[0]:
+                        continue
                     close_prices = data[ticker]['Close'].dropna()
+                    high_prices = data[ticker]['High'].dropna()
+                    low_prices = data[ticker]['Low'].dropna()
             else:
                 if len(SEMICONDUCTOR_STOCKS) == 1:
                     close_prices = data['Close'].dropna()
+                    high_prices = data['High'].dropna()
+                    low_prices = data['Low'].dropna()
                 else:
                     continue
                     
-            if len(close_prices) < 10:
+            if len(close_prices) < 100:
                 continue
                 
-            df = pd.DataFrame({'Close': close_prices})
-            df['SMA_9'] = df['Close'].rolling(window=9).mean()
+            df = pd.DataFrame({
+                'Close': close_prices,
+                'High': high_prices,
+                'Low': low_prices
+            })
             
-            latest = df.iloc[-1]
-            prev = df.iloc[-2]
+            # Find local peaks (highs) and valleys (lows) with distance=5 days
+            peaks, _ = find_peaks(df['High'].values, distance=5)
+            valleys, _ = find_peaks(-df['Low'].values, distance=5)
             
-            if pd.isna(latest['SMA_9']) or pd.isna(prev['SMA_9']):
-                continue
-                
-            signal_type = None
-            if prev['Close'] <= prev['SMA_9'] and latest['Close'] > latest['SMA_9']:
-                signal_type = 'BUY'
-            elif prev['Close'] >= prev['SMA_9'] and latest['Close'] < latest['SMA_9']:
-                signal_type = 'SELL'
-                
-            if signal_type:
-                chart_image = generate_chart(df, ticker, signal_type)
-                signal_data = {
-                    'ticker': ticker,
-                    'close': latest['Close'],
-                    'sma9': latest['SMA_9'],
-                    'image': chart_image
-                }
-                
-                if signal_type == 'BUY':
-                    buy_signals.append(signal_data)
-                else:
-                    sell_signals.append(signal_data)
+            # Exclude the very last day from pivots to not peek ahead
+            peaks = [p for p in peaks if p < len(df)-1]
+            valleys = [v for v in valleys if v < len(df)-1]
+            
+            res_levels = df['High'].iloc[peaks].values
+            sup_levels = df['Low'].iloc[valleys].values
+            
+            # Cluster into zones (3% threshold, minimum 2 touches)
+            res_zones = cluster_levels(res_levels, threshold_pct=0.03, min_touches=2)
+            sup_zones = cluster_levels(sup_levels, threshold_pct=0.03, min_touches=2)
+            
+            latest_close = df.iloc[-1]['Close']
+            prev_close = df.iloc[-2]['Close']
+            
+            # Find active nearest Resistance above prev_close
+            active_res = None
+            for r_min, r_max in sorted(res_zones):
+                if r_max > prev_close:
+                    active_res = (r_min, r_max)
+                    break
                     
+            # Find active nearest Support below prev_close
+            active_sup = None
+            for s_min, s_max in sorted(sup_zones, reverse=True):
+                if s_min < prev_close:
+                    active_sup = (s_min, s_max)
+                    break
+            
+            signal_triggered = False
+            
+            # Breakout BUY: crosses above the active Resistance zone top
+            if active_res and prev_close <= active_res[1] and latest_close > active_res[1]:
+                msg = f"{ticker} (Close: {latest_close:.2f}, Broke Resistance Zone: {active_res[0]:.2f}-{active_res[1]:.2f})"
+                buy_signals.append(msg)
+                signal_triggered = True
+                
+            # Breakdown SELL: crosses below the active Support zone bottom
+            elif active_sup and prev_close >= active_sup[0] and latest_close < active_sup[0]:
+                msg = f"{ticker} (Close: {latest_close:.2f}, Broke Support Zone: {active_sup[0]:.2f}-{active_sup[1]:.2f})"
+                sell_signals.append(msg)
+                signal_triggered = True
+                
+            if signal_triggered:
+                charts_data[ticker] = generate_chart(df, ticker, active_res, active_sup)
+                
         except Exception as e:
             print(f"Error processing {ticker}: {e}")
             
-    return buy_signals, sell_signals
+    return buy_signals, sell_signals, charts_data
 
-def send_email(buy_signals, sell_signals):
+def send_email(buy_signals, sell_signals, charts_data):
     sender = os.environ.get("SENDER_EMAIL")
     password = os.environ.get("SENDER_PASSWORD")
     receiver = os.environ.get("RECEIVER_EMAIL")
@@ -126,67 +174,52 @@ def send_email(buy_signals, sell_signals):
         print("No signals today, skipping email.")
         return
         
-    subject = "Daily Semiconductor 9-SMA Signals with Charts"
-    msg = MIMEMultipart('related')
+    subject = "Daily Advanced S/R Breakout Signals"
+    
+    html_body = """
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <h2 style="color: #2c3e50;">Stocklytics: Daily Breakout Signals</h2>
+        <p>Hello,</p>
+        <p>Here is your daily report for the <strong>Support/Resistance Breakout</strong> strategy.</p>
+    """
+    
+    if buy_signals:
+        html_body += """
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 5px;">✅ BUY SIGNALS (Breakout Above Resistance)</h3>
+            <ul style="list-style-type: none; padding-left: 0;">
+        """
+        for s in buy_signals:
+            html_body += f"<li style='margin-bottom: 5px; padding: 10px; background-color: #eafaf1; border-left: 4px solid #27ae60;'><strong>{s}</strong></li>"
+        html_body += "</ul></div>"
+        
+    if sell_signals:
+        html_body += """
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: #c0392b; border-bottom: 2px solid #c0392b; padding-bottom: 5px;">❌ SELL SIGNALS (Breakdown Below Support)</h3>
+            <ul style="list-style-type: none; padding-left: 0;">
+        """
+        for s in sell_signals:
+            html_body += f"<li style='margin-bottom: 5px; padding: 10px; background-color: #fdedec; border-left: 4px solid #c0392b;'><strong>{s}</strong></li>"
+        html_body += "</ul></div>"
+        
+    html_body += """
+        <p><i>The corresponding charts are attached to this email.</i></p>
+        <br>
+        <p>Best Regards,<br><strong>Stocklytics System</strong></p>
+      </body>
+    </html>
+    """
+        
+    msg = MIMEMultipart()
     msg['From'] = sender
     msg['To'] = receiver
     msg['Subject'] = subject
+    msg.attach(MIMEText(html_body, 'html'))
     
-    msg_alternative = MIMEMultipart('alternative')
-    msg.attach(msg_alternative)
-    
-    html = """
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; }
-          .signal-box { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
-          .buy { color: #28a745; }
-          .sell { color: #dc3545; }
-          img { max-width: 100%; height: auto; border: 1px solid #eee; margin-top: 10px; }
-        </style>
-      </head>
-      <body>
-        <h2>Daily Semiconductor 9-SMA Signals</h2>
-        <p>Here are the 9-day SMA crossover signals for your 50 semiconductor stocks after today's close:</p>
-    """
-    
-    image_attachments = []
-    
-    if buy_signals:
-        html += "<h3 class='buy'>=== BUY SIGNALS (Close crossed above 9-SMA) ===</h3>"
-        for idx, s in enumerate(buy_signals):
-            cid = f"buy_{idx}"
-            html += f"""
-            <div class='signal-box'>
-                <strong>{s['ticker']}</strong> - Close: ${s['close']:.2f} | SMA9: ${s['sma9']:.2f}<br>
-                <img src="cid:{cid}">
-            </div>
-            """
-            image_attachments.append((cid, s['image']))
-            
-    if sell_signals:
-        html += "<h3 class='sell'>=== SELL SIGNALS (Close crossed below 9-SMA) ===</h3>"
-        for idx, s in enumerate(sell_signals):
-            cid = f"sell_{idx}"
-            html += f"""
-            <div class='signal-box'>
-                <strong>{s['ticker']}</strong> - Close: ${s['close']:.2f} | SMA9: ${s['sma9']:.2f}<br>
-                <img src="cid:{cid}">
-            </div>
-            """
-            image_attachments.append((cid, s['image']))
-            
-    html += "<p>Regards,<br>Stocklytics System</p></body></html>"
-    
-    msg_alternative.attach(MIMEText("Please enable HTML to view this email properly.", 'plain'))
-    msg_alternative.attach(MIMEText(html, 'html'))
-    
-    # Attach images
-    for cid, img_data in image_attachments:
-        image = MIMEImage(img_data)
-        image.add_header('Content-ID', f'<{cid}>')
-        image.add_header('Content-Disposition', 'inline')
+    for ticker, img_data in charts_data.items():
+        image = MIMEImage(img_data, name=f"{ticker}_Daily_SR_Breakout.png")
         msg.attach(image)
     
     try:
@@ -201,15 +234,15 @@ def send_email(buy_signals, sell_signals):
         print(f"Failed to send email: {e}")
 
 def run_daily_scan():
-    print("Starting daily scan...")
-    buy_signals, sell_signals = get_9_sma_signals()
+    print("Starting Advanced S/R daily scan...")
+    buy_signals, sell_signals, charts_data = get_signals()
     print(f"Found {len(buy_signals)} BUY and {len(sell_signals)} SELL signals.")
     
     if buy_signals or sell_signals:
-        send_email(buy_signals, sell_signals)
+        send_email(buy_signals, sell_signals, charts_data)
     
     return {
         "status": "success",
-        "buy_signals": len(buy_signals),
-        "sell_signals": len(sell_signals)
+        "buy_signals": buy_signals,
+        "sell_signals": sell_signals
     }

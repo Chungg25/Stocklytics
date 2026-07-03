@@ -33,25 +33,25 @@ def get_compare_data(tickers, timeframe, indicators):
     if df.empty:
         return []
 
+    # If yfinance returned flat columns (e.g. single ticker), convert it to MultiIndex
+    if not isinstance(df.columns, pd.MultiIndex):
+        ticker = tickers[0]
+        df.columns = pd.MultiIndex.from_tuples([(col, ticker) for col in df.columns])
+
     # Format into a dictionary of DataFrames per ticker
     ticker_dfs = {}
     
-    if len(tickers) == 1:
-        # yfinance returns single index columns if only 1 ticker
-        ticker = tickers[0]
-        ticker_dfs[ticker] = df
-    else:
-        # Multi-index columns
-        for ticker in tickers:
-            try:
-                # Extract data for this specific ticker
-                ticker_df = pd.DataFrame()
-                for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
-                    if (col, ticker) in df.columns:
-                        ticker_df[col] = df[col][ticker]
+    # Process all tickers uniformly using MultiIndex structure
+    for ticker in tickers:
+        try:
+            ticker_df = pd.DataFrame()
+            for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+                if (col, ticker) in df.columns:
+                    ticker_df[col] = df[col][ticker]
+            if not ticker_df.empty:
                 ticker_dfs[ticker] = ticker_df.dropna(subset=['Close'])
-            except KeyError:
-                continue
+        except KeyError:
+            continue
                 
     # Prepare result data structure
     # We will build a unified list of dictionaries by date
@@ -62,7 +62,16 @@ def get_compare_data(tickers, timeframe, indicators):
             continue
             
         close = t_df['Close']
+        if isinstance(close, pd.DataFrame):
+            close = close.squeeze()
+        if isinstance(close, pd.DataFrame):
+            close = close.iloc[:, 0]
+
         volume = t_df.get('Volume', pd.Series(np.zeros(len(close)), index=close.index))
+        if isinstance(volume, pd.DataFrame):
+            volume = volume.squeeze()
+        if isinstance(volume, pd.DataFrame):
+            volume = volume.iloc[:, 0]
         
         # Calculate Indicators on Absolute Prices BEFORE slicing
         t_df['SMA_20'] = ta.trend.sma_indicator(close, window=20)

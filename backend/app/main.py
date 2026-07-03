@@ -60,6 +60,8 @@ class CompareRequest(BaseModel):
 
 @app.post("/api/compare")
 def run_compare(req: CompareRequest):
+    if len(req.tickers) > 50:
+        return {"status": "error", "message": "Cannot compare more than 50 tickers at once."}
     try:
         from app.services.compare_service import get_compare_data
         data = get_compare_data(req.tickers, req.timeframe, req.indicators)
@@ -67,4 +69,38 @@ def run_compare(req: CompareRequest):
     except Exception as e:
         import traceback
         traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+class SaveGroupsRequest(BaseModel):
+    groups: dict[str, list[str]]
+
+@app.get("/api/groups")
+def get_groups():
+    try:
+        from app.services.sheets_service import load_groups
+        groups = load_groups()
+        return {"status": "success", "groups": groups}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/groups")
+def save_groups_endpoint(req: SaveGroupsRequest):
+    try:
+        from app.services.sheets_service import save_groups
+        save_groups(req.groups)
+        return {"status": "success", "message": "Successfully saved groups to Google Sheets."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+class AIAnalysisRequest(BaseModel):
+    tickers: list[str]
+    prompt: str
+
+@app.post("/api/ai-analysis")
+def run_ai_analysis(req: AIAnalysisRequest):
+    try:
+        from app.services.ai_service import generate_ai_analysis
+        result = generate_ai_analysis(req.tickers, req.prompt)
+        return {"status": "success", "data": result}
+    except Exception as e:
         return {"status": "error", "message": str(e)}
