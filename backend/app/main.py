@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from app.services.stock_service import get_top_stocks, get_benchmark_data
 
 app = FastAPI(title="Stocklytics API")
@@ -102,5 +103,41 @@ def run_ai_analysis(req: AIAnalysisRequest):
         from app.services.ai_service import generate_ai_analysis
         result = generate_ai_analysis(req.tickers, req.prompt)
         return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+class AIAssessmentRequest(BaseModel):
+    ticker: str
+    mode: str
+    user_prompt: str = ""
+
+@app.post("/api/ai-assessment")
+def run_ai_assessment(req: AIAssessmentRequest):
+    from app.services.ai_service import generate_ai_assessment
+    
+    # We return the generator directly wrapped in a StreamingResponse
+    return StreamingResponse(
+        generate_ai_assessment(req.ticker, req.mode, req.user_prompt),
+        media_type="text/event-stream"
+    )
+
+class AIIntentRequest(BaseModel):
+    prompt: str
+
+@app.post("/api/ai-intent")
+def run_ai_intent(req: AIIntentRequest):
+    try:
+        from app.services.ai_service import parse_ai_intent
+        result = parse_ai_intent(req.prompt)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/ai-status")
+def get_ai_status():
+    try:
+        from app.services.ai_service import get_active_key_status
+        status = get_active_key_status()
+        return {"status": "success", "active_key": status}
     except Exception as e:
         return {"status": "error", "message": str(e)}

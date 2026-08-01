@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutGrid, Briefcase, Eye, Filter, List, BarChart2, 
-  Bitcoin, DollarSign, Activity, Bell, FileText, Sparkles, Globe, BookOpen
+  Bitcoin, DollarSign, Activity, Bell, FileText, Sparkles, Globe, BookOpen, TrendingUp
 } from 'lucide-react';
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { icon: Eye, label: 'WATCHLIST', id: 'watchlist', path: '/watchlist' },
   { icon: Filter, label: 'SCREENERS', id: 'screeners', path: '/screeners' },
   { icon: List, label: 'COMPARE', id: 'compare', path: '/compare' },
+  { icon: TrendingUp, label: 'ADV CHART', id: 'adv-chart', path: '/chart' },
   { icon: BarChart2, label: 'SIGNALS', id: 'signals', path: '/signals' },
   { icon: Bitcoin, label: 'CRYPTO SIG', id: 'crypto-sig', path: '/crypto-sig' },
   { icon: Globe, label: 'FOREX', id: 'forex', path: '#' },

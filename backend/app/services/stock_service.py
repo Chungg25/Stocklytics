@@ -2,6 +2,10 @@ import yfinance as yf
 import pandas as pd
 import concurrent.futures
 import math
+import datetime
+
+_top_stocks_cache = {"date": None, "data": None}
+_benchmark_cache = {"date": None, "data": {}}
 
 def clean_float(val):
     if pd.isna(val) or val is None:
@@ -95,6 +99,11 @@ def get_stock_data(ticker_symbol):
         return None
 
 def get_top_stocks():
+    global _top_stocks_cache
+    today = datetime.date.today()
+    if _top_stocks_cache["date"] == today and _top_stocks_cache["data"] is not None:
+        return _top_stocks_cache["data"]
+
     tickers = [
         # Tech & Communication
         "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "CSCO", "CRM",
@@ -125,9 +134,22 @@ def get_top_stocks():
 
     results.sort(key=lambda x: x['id'])
     
+    _top_stocks_cache["date"] = today
+    _top_stocks_cache["data"] = results
+    
     return results
 
 def get_benchmark_data(sector_name=""):
+    global _benchmark_cache
+    today = datetime.date.today()
+    
+    if _benchmark_cache["date"] != today:
+        _benchmark_cache["date"] = today
+        _benchmark_cache["data"] = {}
+        
+    if sector_name in _benchmark_cache["data"]:
+        return _benchmark_cache["data"][sector_name]
+
     try:
         category_map = {
             "top25": ["NVDA", "MSFT", "AAPL", "AMZN", "META"],
@@ -163,8 +185,8 @@ def get_benchmark_data(sector_name=""):
         
         chart_data = []
         
-        for date in hist.index:
-            s_price = clean_float(sp500_close.get(date))
+        for dt_idx in hist.index:
+            s_price = clean_float(sp500_close.get(dt_idx))
             if not sp500_start or s_price is None:
                 continue
                 
@@ -173,7 +195,7 @@ def get_benchmark_data(sector_name=""):
             sector_pcts = []
             for t, close_series in stock_closes.items():
                 if t in stock_starts:
-                    t_price = clean_float(close_series.get(date))
+                    t_price = clean_float(close_series.get(dt_idx))
                     if t_price is not None and not pd.isna(t_price):
                         pct = ((t_price - stock_starts[t]) / stock_starts[t]) * 100
                         sector_pcts.append(pct)
@@ -181,11 +203,34 @@ def get_benchmark_data(sector_name=""):
             if sector_pcts:
                 sector_avg_pct = sum(sector_pcts) / len(sector_pcts)
                 chart_data.append({
-                    "date": date.strftime("%Y-%m"),
+                    "date": dt_idx.strftime("%Y-%m"),
                     "sp500": round(sp500_pct, 2),
                     "sector": round(sector_avg_pct, 2)
                 })
+                
+        _benchmark_cache["data"][sector_name] = chart_data
         return chart_data
     except Exception as e:
         print(f"Error fetching benchmark: {e}")
         return []
+
+def get_peer_stocks(ticker_symbol: str, limit: int = 5):
+    stocks = get_top_stocks()
+    target_sector = None
+    
+    for s in stocks:
+        if s["id"] == ticker_symbol.upper():
+            target_sector = s["sector"]
+            break
+            
+    if not target_sector:
+        data = get_stock_data(ticker_symbol.upper())
+        if data:
+            target_sector = data.get("sector")
+            
+    if not target_sector or target_sector == "Unknown":
+        return []
+        
+    peers = [s["id"] for s in stocks if s["sector"] == target_sector and s["id"] != ticker_symbol.upper()]
+    return peers[:limit]
+

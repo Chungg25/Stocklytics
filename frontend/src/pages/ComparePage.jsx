@@ -392,15 +392,16 @@ const ComparePage = () => {
       {error && <div className="text-stock-red mb-4 p-4 border border-stock-red/20 bg-stock-red/10 rounded-lg">{error}</div>}
       {successMsg && <div className="text-green mb-4 p-4 border border-green/20 bg-green/10 rounded-lg">{successMsg}</div>}
 
-      {/* Main Chart */}
-      <div className="bg-dark-card border border-dark-border rounded-xl p-4 mb-4 relative min-h-[400px]">
+      {/* Compare Chart Area */}
+      <div className="bg-dark-card border border-dark-border rounded-xl p-4 mb-6 relative min-h-[400px]">
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-dark-card/50 backdrop-blur-sm rounded-xl">
             <div className="text-primary font-bold animate-pulse">Loading Chart Data...</div>
           </div>
         )}
-
-        <h2 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Performance (%)</h2>
+        <h2 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+          <Activity size={16} /> Percentage Comparison
+        </h2>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 120, left: -20, bottom: 0 }}>
