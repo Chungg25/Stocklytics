@@ -6,6 +6,7 @@ import TodayPage from './pages/TodayPage'
 import BacktestPage from './pages/BacktestPage'
 import ComparePage from './pages/ComparePage'
 import TradingViewPage from './pages/TradingViewPage'
+import PortfolioPage from './pages/PortfolioPage'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/backtest" element={<BacktestPage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/chart" element={<TradingViewPage />} />
+        <Route path="/portfolio" element={<PortfolioPage />} />
         {/* Hiển thị tạm TodayPage cho các link chưa có nội dung để không bị lỗi trắng trang */}
         <Route path="*" element={<TodayPage />} />
       </Routes>

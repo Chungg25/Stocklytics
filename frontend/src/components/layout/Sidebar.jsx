@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutGrid, Briefcase, Eye, Filter, List, BarChart2, 
-  Bitcoin, DollarSign, Activity, Bell, FileText, Sparkles, Globe, BookOpen, TrendingUp
+  Bitcoin, DollarSign, Activity, Bell, FileText, Sparkles, Globe, BookOpen, TrendingUp, Wallet
 } from 'lucide-react';
 
 const navItems = [

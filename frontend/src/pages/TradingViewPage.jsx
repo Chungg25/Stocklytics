@@ -170,7 +170,7 @@ const TradingViewPage = () => {
               symbol={symbol} 
               theme="dark" 
               autosize={true}
-              allow_symbol_change={false}
+              allow_symbol_change={true}
               studies={studies.length > 0 ? studies : undefined}
               studiesOverrides={Object.keys(studiesOverrides).length > 0 ? studiesOverrides : undefined}
             />
@@ -203,6 +203,20 @@ const TradingViewPage = () => {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'team' ? 'bg-stock-green text-dark-bg shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-stock-green hover:text-dark-bg border border-dark-border'}`}
             >
               <Users size={18} /> Đánh giá Chuyên gia
+            </button>
+            <button 
+              onClick={() => handleAssessment('pinescript')}
+              disabled={loadingAssessment}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'pinescript' ? 'bg-orange-600 text-white shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-orange-600/80 border border-dark-border'}`}
+            >
+              <FileText size={18} /> Code PineScript
+            </button>
+            <button 
+              onClick={() => handleAssessment('tradingagents')}
+              disabled={loadingAssessment}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'tradingagents' ? 'bg-red-600 text-white shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-red-600/80 border border-dark-border'}`}
+            >
+              <Users size={18} /> Dự Đoán Giao Dịch (Agents)
             </button>
           </div>
           
