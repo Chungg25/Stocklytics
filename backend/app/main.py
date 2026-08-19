@@ -10,7 +10,10 @@ async def lifespan(app: FastAPI):
     # start_scheduler() # Disabled per user request
     yield
     # Shutdown
-    stop_scheduler()
+    try:
+        stop_scheduler()
+    except Exception:
+        pass
 
 app = FastAPI(title="Stocklytics API", lifespan=lifespan)
 
