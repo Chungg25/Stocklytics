@@ -13,10 +13,11 @@ const ChatPage = () => {
   
   // Fake user ID for now - should come from auth
   const USER_ID = "00000000-0000-0000-0000-000000000000";
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const fetchSessions = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/chat/sessions/${USER_ID}`);
+      const res = await fetch(`${API_URL}/api/chat/sessions/${USER_ID}`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setSessions(data);
@@ -34,7 +35,7 @@ const ChatPage = () => {
 
   const fetchMessages = async (sessionId) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/chat/sessions/${sessionId}/messages`);
+      const res = await fetch(`${API_URL}/api/chat/sessions/${sessionId}/messages`);
       const data = await res.json();
       if (Array.isArray(data)) {
         // Filter out tool messages for clean UI, or format them differently
@@ -73,7 +74,7 @@ const ChatPage = () => {
     if (!sessionIdToDelete) return;
     if (window.confirm('Are you sure you want to delete this chat history?')) {
       try {
-        await fetch(`http://localhost:8000/api/chat/sessions/${sessionIdToDelete}`, {
+        await fetch(`${API_URL}/api/chat/sessions/${sessionIdToDelete}`, {
           method: 'DELETE'
         });
         if (activeSession === sessionIdToDelete) {
@@ -107,7 +108,7 @@ const ChatPage = () => {
         user_id: USER_ID
       };
 
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
