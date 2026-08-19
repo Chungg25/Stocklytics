@@ -10,4 +10,5 @@ pandas
 matplotlib
 scipy
 gspread
-duckduckgo-search
+ddgs
+supabase
