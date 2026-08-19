@@ -4,6 +4,7 @@ yfinance
 sqlalchemy
 pydantic
 python-dotenv
+
 openai
 ta
 pandas
@@ -12,3 +13,5 @@ scipy
 gspread
 ddgs
 supabase
+apscheduler
+trafilatura
