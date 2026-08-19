@@ -10,6 +10,7 @@ const ChatPage = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const messagesEndRef = useRef(null);
+  const skipNextFetchRef = useRef(false);
   
   // Fake user ID for now - should come from auth
   const USER_ID = "00000000-0000-0000-0000-000000000000";
@@ -64,7 +65,11 @@ const ChatPage = () => {
 
   useEffect(() => {
     if (activeSession) {
-      fetchMessages(activeSession);
+      if (skipNextFetchRef.current) {
+        skipNextFetchRef.current = false;
+      } else {
+        fetchMessages(activeSession);
+      }
     } else {
       setMessages([]);
     }
@@ -137,6 +142,7 @@ const ChatPage = () => {
           const newSessionId = sessionLine.replace(sessionPrefix, "").trim();
           
           if (!activeSession) {
+             skipNextFetchRef.current = true;
              setActiveSession(newSessionId);
              fetchSessions(); // Refresh sidebar
           }
