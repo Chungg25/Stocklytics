@@ -1,70 +1,6 @@
-import os
 import json
-from dotenv import load_dotenv
-from openai import OpenAI
-
-load_dotenv()
-
-# Global state to track which key is currently active
-ACTIVE_KEY_INDEX = 1
-
-def get_groq_client():
-    global ACTIVE_KEY_INDEX
-    key1 = os.getenv("GROQ_API_KEY_1")
-    key2 = os.getenv("GROQ_API_KEY_2")
-    
-    if ACTIVE_KEY_INDEX == 1 and key1:
-        return OpenAI(base_url="https://api.groq.com/openai/v1", api_key=key1), 1
-    elif ACTIVE_KEY_INDEX == 2 and key2:
-        return OpenAI(base_url="https://api.groq.com/openai/v1", api_key=key2), 2
-    elif key1: # Fallback if only key 1 exists but index was 2
-        return OpenAI(base_url="https://api.groq.com/openai/v1", api_key=key1), 1
-    elif key2:
-        return OpenAI(base_url="https://api.groq.com/openai/v1", api_key=key2), 2
-    return None, 0
-
-def get_zhipu_client():
-    api_key = os.getenv("API_KEY")
-    if not api_key:
-        raise Exception("Zenmux API_KEY is missing in .env")
-    return OpenAI(base_url="https://zenmux.ai/api/v1", api_key=api_key)
-
-
-
-def switch_key():
-    global ACTIVE_KEY_INDEX
-    ACTIVE_KEY_INDEX = 2 if ACTIVE_KEY_INDEX == 1 else 1
-
-def get_active_key_status():
-    return ACTIVE_KEY_INDEX
-
-def execute_with_fallback(messages, response_format=None):
-    client, key_idx = get_groq_client()
-    if not client:
-        raise Exception("No Groq API keys found in .env")
-        
-    try:
-        kwargs = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": messages,
-        }
-        if response_format:
-            kwargs["response_format"] = response_format
-            
-        response = client.chat.completions.create(**kwargs)
-        return response.choices[0].message.content
-    except Exception as e:
-        error_str = str(e).lower()
-        if "429" in error_str or "rate limit" in error_str or "quota" in error_str or "insufficient" in error_str:
-            print(f"Key {key_idx} failed with rate limit/quota. Switching key...")
-            switch_key()
-            client2, _ = get_groq_client()
-            kwargs["model"] = "llama-3.3-70b-versatile"
-            response = client2.chat.completions.create(**kwargs)
-            return response.choices[0].message.content
-        raise e
-
-
+from app.ai.llm_client import get_zhipu_client, execute_with_fallback, get_active_key_status
+from app.ai.prompts import build_assessment_prompt
 
 def generate_ai_analysis(tickers, prompt):
     if not tickers:
@@ -88,37 +24,31 @@ def generate_ai_analysis(tickers, prompt):
     except Exception as e:
         return f"**Error during AI Analysis:**\n\n```\n{str(e)}\n```"
 
-def generate_ai_assessment(ticker: str, mode: str, user_prompt: str = ""):
-    file_map = {
-        "checklist": "investment-checklist.md",
-        "research": "investment-research.md",
-        "team": "investment-team.md"
-    }
-    file_name = file_map.get(mode, "investment-checklist.md")
-    
-    prompt_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "skill", file_name)
-    try:
-        with open(prompt_path, "r", encoding="utf-8") as f:
-            template = f.read()
-    except Exception as e:
-        return f"Could not load skill file {file_name}: {e}"
-        
-    full_prompt = template.replace("$ARGUMENTS", ticker)
-    
-    full_prompt += f"\n\n[FINAL SYSTEM DIRECTIVE]\n1. You MUST write your ENTIRE response in ENGLISH, regardless of the user's prompt. Translate all your analysis, headers, and bullet points into ENGLISH. This is a strict requirement.\n2. IMPORTANT: You MUST use your own native web_search tool to find the absolute latest real-time financial data, news and events about this company to supplement your analysis. ALWAYS cite your sources as links at the end of your report."
+def generate_ai_assessment(ticker: str, mode: str, user_prompt: str = "", context: str = ""):
+    full_prompt = build_assessment_prompt(ticker, mode, context)
 
     try:
-        client = get_zhipu_client()
-        response = client.chat.completions.create(
-            model="z-ai/glm-4.7-flash-free",
-            messages=[{"role": "user", "content": full_prompt}],
-            tools=[{"type": "web_search", "web_search": {"enable": True}}],
-            stream=True
-        )
-        
-        for chunk in response:
-            if chunk.choices and chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+        if mode in ["tradingagents", "tradingagents_fast"]:
+            # Use Groq Llama for trading agents to get faster/better JSON parsing
+            response_stream = execute_with_fallback(
+                messages=[{"role": "user", "content": full_prompt}], 
+                stream=True
+            )
+            for chunk in response_stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        else:
+            client = get_zhipu_client()
+            response = client.chat.completions.create(
+                model="z-ai/glm-4.7-flash-free",
+                messages=[{"role": "user", "content": full_prompt}],
+                tools=[{"type": "web_search", "web_search": {"enable": True}}],
+                stream=True
+            )
+            
+            for chunk in response:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
                 
     except Exception as e:
         yield f"**Error during AI Assessment:**\n\n```\n{str(e)}\n```"

@@ -1,9 +1,18 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from app.services.stock_service import get_top_stocks, get_benchmark_data
+from contextlib import asynccontextmanager
+from app.api.endpoints import stocks, ai, trading, chat
+from app.core.scheduler import start_scheduler, stop_scheduler
 
-app = FastAPI(title="Stocklytics API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    # start_scheduler() # Disabled per user request
+    yield
+    # Shutdown
+    stop_scheduler()
+
+app = FastAPI(title="Stocklytics API", lifespan=lifespan)
 
 # Configure CORS for Frontend
 app.add_middleware(
@@ -18,126 +27,8 @@ app.add_middleware(
 def read_root():
     return {"message": "Welcome to Stocklytics API"}
 
-@app.get("/api/stocks")
-def get_stocks():
-    # Gọi hàm fetch dữ liệu thực từ yfinance
-    stocks = get_top_stocks()
-    return stocks
-
-@app.get("/api/benchmark")
-def get_benchmark(sector: str = Query("top25")):
-    return get_benchmark_data(sector)
-
-from pydantic import BaseModel
-
-class BacktestRequest(BaseModel):
-    ticker: str
-    start_date: str
-    end_date: str
-    prompt: str
-
-@app.post("/api/backtest")
-def run_strategy_backtest(req: BacktestRequest):
-    try:
-        from app.services.backtest_service import run_backtest
-        result = run_backtest(req.ticker, req.start_date, req.end_date, req.prompt)
-        return {"status": "success", "data": result}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@app.post("/api/scan-signals")
-def trigger_scan():
-    try:
-        from app.services.scanner_service import run_daily_scan
-        result = run_daily_scan()
-        return result
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-class CompareRequest(BaseModel):
-    tickers: list[str]
-    timeframe: str
-    indicators: list[str]
-
-@app.post("/api/compare")
-def run_compare(req: CompareRequest):
-    if len(req.tickers) > 50:
-        return {"status": "error", "message": "Cannot compare more than 50 tickers at once."}
-    try:
-        from app.services.compare_service import get_compare_data
-        data = get_compare_data(req.tickers, req.timeframe, req.indicators)
-        return {"status": "success", "data": data}
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "message": str(e)}
-
-class SaveGroupsRequest(BaseModel):
-    groups: dict[str, list[str]]
-
-@app.get("/api/groups")
-def get_groups():
-    try:
-        from app.services.sheets_service import load_groups
-        groups = load_groups()
-        return {"status": "success", "groups": groups}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@app.post("/api/groups")
-def save_groups_endpoint(req: SaveGroupsRequest):
-    try:
-        from app.services.sheets_service import save_groups
-        save_groups(req.groups)
-        return {"status": "success", "message": "Successfully saved groups to Google Sheets."}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-class AIAnalysisRequest(BaseModel):
-    tickers: list[str]
-    prompt: str
-
-@app.post("/api/ai-analysis")
-def run_ai_analysis(req: AIAnalysisRequest):
-    try:
-        from app.services.ai_service import generate_ai_analysis
-        result = generate_ai_analysis(req.tickers, req.prompt)
-        return {"status": "success", "data": result}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-class AIAssessmentRequest(BaseModel):
-    ticker: str
-    mode: str
-    user_prompt: str = ""
-
-@app.post("/api/ai-assessment")
-def run_ai_assessment(req: AIAssessmentRequest):
-    from app.services.ai_service import generate_ai_assessment
-    
-    # We return the generator directly wrapped in a StreamingResponse
-    return StreamingResponse(
-        generate_ai_assessment(req.ticker, req.mode, req.user_prompt),
-        media_type="text/event-stream"
-    )
-
-class AIIntentRequest(BaseModel):
-    prompt: str
-
-@app.post("/api/ai-intent")
-def run_ai_intent(req: AIIntentRequest):
-    try:
-        from app.services.ai_service import parse_ai_intent
-        result = parse_ai_intent(req.prompt)
-        return {"status": "success", "data": result}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@app.get("/api/ai-status")
-def get_ai_status():
-    try:
-        from app.services.ai_service import get_active_key_status
-        status = get_active_key_status()
-        return {"status": "success", "active_key": status}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+# Include Routers
+app.include_router(stocks.router, prefix="/api/stocks", tags=["stocks"])
+app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
+app.include_router(trading.router, prefix="/api/trading", tags=["trading"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
