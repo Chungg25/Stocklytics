@@ -31,7 +31,7 @@ def read_root():
     return {"message": "Welcome to Stocklytics API"}
 
 # Include Routers
-app.include_router(stocks.router, prefix="/api/stocks", tags=["stocks"])
+app.include_router(stocks.router, prefix="/api", tags=["stocks"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 app.include_router(trading.router, prefix="/api/trading", tags=["trading"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
