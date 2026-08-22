@@ -23,7 +23,7 @@ const navItems = [
 
 const Sidebar = () => {
   return (
-    <div className="w-20 md:w-24 bg-dark-sidebar h-screen fixed left-0 top-0 flex flex-col items-center py-4 border-r border-dark-border overflow-y-auto">
+    <div className="w-20 md:w-24 bg-dark-sidebar h-screen fixed left-0 top-0 flex flex-col items-center py-4 border-r border-dark-border overflow-y-auto no-scrollbar">
       {navItems.map((item) => {
         const Icon = item.icon;
         return (

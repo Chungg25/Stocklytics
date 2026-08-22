@@ -222,7 +222,7 @@ const TradingViewPage = () => {
           
           {/* Assessment Result */}
           {(loadingAssessment || assessmentResult) && (
-            <div className="mt-6 p-6 bg-dark-bg rounded-lg border border-dark-border max-h-[500px] overflow-y-auto custom-scrollbar">
+            <div className="mt-6 p-6 bg-dark-bg rounded-lg border border-dark-border max-h-[500px] overflow-y-auto no-scrollbar">
               {loadingAssessment && !assessmentResult && (
                 <div className="flex flex-col items-center justify-center py-8 space-y-4">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />

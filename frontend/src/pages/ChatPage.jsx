@@ -202,7 +202,7 @@ const ChatPage = () => {
           </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-2 space-y-1 w-64">
+        <div className="flex-1 overflow-y-auto p-2 space-y-1 w-64 no-scrollbar">
           {sessions.map(s => (
             <div 
               key={s.id}
@@ -258,7 +258,7 @@ const ChatPage = () => {
         </div>
 
         {/* Message Thread */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32 no-scrollbar">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
               <div className="w-16 h-16 bg-blue-900/30 rounded-2xl flex items-center justify-center">
