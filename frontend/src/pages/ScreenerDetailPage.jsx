@@ -31,8 +31,8 @@ const ScreenerDetailPage = () => {
         fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/benchmark?sector=${id}`).then(res => res.json())
       ])
     .then(([stocksData, benchmarkData]) => {
-      setStocks(stocksData);
-      setBenchmarkData(benchmarkData);
+      setStocks(Array.isArray(stocksData) ? stocksData : []);
+      setBenchmarkData(Array.isArray(benchmarkData) ? benchmarkData : []);
       setLoading(false);
     })
     .catch(err => {

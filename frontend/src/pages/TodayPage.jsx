@@ -29,7 +29,7 @@ const TodayPage = () => {
     fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stocks`)
       .then(res => res.json())
       .then(data => {
-        setStocks(data);
+        setStocks(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {

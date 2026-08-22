@@ -75,7 +75,7 @@ const ComparePage = () => {
         const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/trading/groups`);
         const resData = await response.json();
         if (resData.status === 'success') {
-          setGroups(resData.groups);
+          setGroups(Array.isArray(resData.groups) ? resData.groups : []);
           // Start with an empty selection as requested
         } else {
           setError(resData.message);
