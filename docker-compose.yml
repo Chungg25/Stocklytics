@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: stocklytics-frontend
+    ports:
+      - "3000:80"
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      # Inject VITE_ environment variables here during build if needed
+      # Though for Vite, they need to be present during build time.
+      # To do this correctly in Docker compose, we pass them as build args.
+      # However, for simplicity if using a `.env` in the frontend directory, Docker build will pick it up!
+      - NODE_ENV=production
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stocklytics-backend
+    ports:
+      - "8000:8000"
+    restart: always
+    env_file:
+      - ./backend/.env
+    # Optionally mount the DB or volume if using sqlite, but we use Supabase cloud.
