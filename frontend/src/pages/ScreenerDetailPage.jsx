@@ -6,7 +6,7 @@ import StockTable from '../components/screener/StockTable';
 import PageLayout from '../components/layout/PageLayout';
 
 const categoryMap = {
-  'top25': { title: 'Stocklytics Top 25', filter: (s) => true, icon: Trophy },
+  'top25': { title: 'Alphahubiq Top 25', filter: (s) => true, icon: Trophy },
   'technology': { title: 'Technology Stocks', filter: (s) => s.sector === 'Technology', icon: Cpu },
   'healthcare': { title: 'Healthcare Stocks', filter: (s) => s.sector === 'Healthcare', icon: HeartPulse },
   'financial': { title: 'Financial Services', filter: (s) => s.sector === 'Financial Services', icon: Building2 },

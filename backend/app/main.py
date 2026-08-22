@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
-app = FastAPI(title="Stocklytics API", lifespan=lifespan)
+app = FastAPI(title="Alphahubiq API", lifespan=lifespan)
 
 # Configure CORS for Frontend
 app.add_middleware(
@@ -28,7 +28,7 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Stocklytics API"}
+    return {"message": "Welcome to Alphahubiq API"}
 
 # Include Routers
 app.include_router(stocks.router, prefix="/api", tags=["stocks"])

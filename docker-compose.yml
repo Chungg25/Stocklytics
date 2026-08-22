@@ -5,7 +5,7 @@ services:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: stocklytics-frontend
+    container_name: alphahubiq-frontend
     ports:
       - "3000:80"
     restart: always
@@ -22,7 +22,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: stocklytics-backend
+    container_name: alphahubiq-backend
     ports:
       - "8000:8000"
     restart: always

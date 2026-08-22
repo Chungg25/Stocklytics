@@ -9,7 +9,7 @@ const TopNav = () => {
       <div className="flex items-center gap-8">
         <div className="flex items-center gap-2 cursor-pointer">
           <Target size={24} className="text-primary" />
-          <span className="text-xl font-bold text-white tracking-wide">Stocklytics</span>
+          <span className="text-xl font-bold text-white tracking-wide">Alphahubiq</span>
         </div>
         
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-text-primary">

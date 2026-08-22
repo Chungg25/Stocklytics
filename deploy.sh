@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deployment script for Stocklytics on Oracle VPS
+# Deployment script for Alphahubiq on Oracle VPS
 
 echo "🚀 Starting Deployment Process..."
 

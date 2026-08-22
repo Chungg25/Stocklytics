@@ -241,7 +241,7 @@ const ChatPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <h1 className="text-lg font-semibold text-gray-100 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Stocklytics AI</h1>
+            <h1 className="text-lg font-semibold text-gray-100 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Alphahubiq AI</h1>
           </div>
           
           {activeSession && (

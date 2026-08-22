@@ -5,7 +5,7 @@ import PageLayout from '../components/layout/PageLayout';
 
 const categories = [
   { id: 'new', title: 'Create New Screener', desc: 'Custom Rules', icon: Plus, isNew: true },
-  { id: 'top25', title: 'Stocklytics Top 25', desc: 'Stocklytics Score', icon: Trophy },
+  { id: 'top25', title: 'Alphahubiq Top 25', desc: 'Alphahubiq Score', icon: Trophy },
   { id: 'technology', title: 'Technology Stocks', desc: 'Market Cap', icon: Cpu },
   { id: 'healthcare', title: 'Healthcare Stocks', desc: 'Score', icon: HeartPulse },
   { id: 'financial', title: 'Bank Stocks', desc: 'Score', icon: Building2 },
@@ -57,7 +57,7 @@ const ScreenerPage = () => {
       {/* Header Area */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Screeners by Stocklytics</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Screeners by Alphahubiq</h1>
           <p className="text-text-muted max-w-2xl">
             Browse our collection of pre-built stock screeners to find the best investment opportunities across different categories.
           </p>

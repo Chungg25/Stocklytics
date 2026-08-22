@@ -179,7 +179,7 @@ def send_email(buy_signals, sell_signals, charts_data):
     html_body = """
     <html>
       <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-        <h2 style="color: #2c3e50;">Stocklytics: Daily Breakout Signals</h2>
+        <h2 style="color: #2c3e50;">Alphahubiq: Daily Breakout Signals</h2>
         <p>Hello,</p>
         <p>Here is your daily report for the <strong>Support/Resistance Breakout</strong> strategy.</p>
     """
@@ -207,7 +207,7 @@ def send_email(buy_signals, sell_signals, charts_data):
     html_body += """
         <p><i>The corresponding charts are attached to this email.</i></p>
         <br>
-        <p>Best Regards,<br><strong>Stocklytics System</strong></p>
+        <p>Best Regards,<br><strong>Alphahubiq System</strong></p>
       </body>
     </html>
     """

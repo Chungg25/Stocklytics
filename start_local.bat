@@ -1,9 +1,9 @@
 @echo off
-title Khởi động Stocklytics (Host Local)
+title Khởi động Alphahubiq (Host Local)
 color 0A
 
 echo ==================================================
-echo      KHOI DONG STOCKLYTICS - HOST LOCAL
+echo      KHOI DONG ALPHAHUBIQ - HOST LOCAL
 echo ==================================================
 echo.
 
@@ -11,10 +11,10 @@ echo.
 cd /d "%~dp0"
 
 echo [1/2] Dang khoi dong Backend (FastAPI)...
-start "Stocklytics Backend" cmd /k "cd backend && set PYTHONIOENCODING=utf-8 && call venv\Scripts\activate && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+start "Alphahubiq Backend" cmd /k "cd backend && set PYTHONIOENCODING=utf-8 && call venv\Scripts\activate && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 echo [2/2] Dang khoi dong Frontend (React/Vite)...
-start "Stocklytics Frontend" cmd /k "cd frontend && npm run dev -- --host"
+start "Alphahubiq Frontend" cmd /k "cd frontend && npm run dev -- --host"
 
 echo.
 echo ==================================================

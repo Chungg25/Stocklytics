@@ -36,7 +36,7 @@ def run_expert_analysis_tool(ticker: str) -> Dict[str, Any]:
         from datetime import datetime
         current_year = datetime.now().year
         
-        system_prompt = f"""You are the Stocklytics Expert Team (Business, Financial, Industry, Risk).
+        system_prompt = f"""You are the Alphahubiq Expert Team (Business, Financial, Industry, Risk).
 Current Year: {current_year}.
 Analyze {ticker}. Current Price: {current_price}, Rev Growth: {revenue_growth}, Margins: {margins}.
 Output your analysis strictly in this JSON format:
