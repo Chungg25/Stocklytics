@@ -14,7 +14,8 @@ const ChatPage = () => {
   
   // Fake user ID for now - should come from auth
   const USER_ID = "00000000-0000-0000-0000-000000000000";
-  const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+  const rawApiUrl = import.meta.env.VITE_API_URL ?? '';
+  const API_URL = rawApiUrl.replace(/\/$/, '');
 
   const fetchSessions = async () => {
     try {

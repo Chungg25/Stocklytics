@@ -26,7 +26,7 @@ const TodayPage = () => {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/stocks`)
+    fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stocks`)
       .then(res => res.json())
       .then(data => {
         setStocks(data);

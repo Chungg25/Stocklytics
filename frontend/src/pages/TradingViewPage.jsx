@@ -22,7 +22,7 @@ const TradingViewPage = () => {
 
   const fetchKeyStatus = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/ai/status`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/ai/status`);
       const data = await res.json();
       if (data.status === 'success') {
         setActiveKey(data.active_key);
@@ -40,7 +40,7 @@ const TradingViewPage = () => {
     if (e.key === 'Enter' && prompt.trim()) {
       setLoadingIntent(true);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/ai/intent`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/ai/intent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt })
@@ -104,7 +104,7 @@ const TradingViewPage = () => {
     setLoadingAssessment(true);
     setAssessmentResult("");
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/ai/assessment`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/ai/assessment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker: symbol, mode, user_prompt: prompt })

@@ -72,7 +72,7 @@ const ComparePage = () => {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/trading/groups`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/trading/groups`);
         const resData = await response.json();
         if (resData.status === 'success') {
           setGroups(resData.groups);
@@ -95,7 +95,7 @@ const ComparePage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/compare`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/compare`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tickers, timeframe, indicators: [] })
@@ -126,7 +126,7 @@ const ComparePage = () => {
     setAiResult(null);
     setError(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/ai/analysis`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/ai/analysis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -225,7 +225,7 @@ const ComparePage = () => {
     setError(null);
     setSuccessMsg(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/trading/groups`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/trading/groups`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ groups })

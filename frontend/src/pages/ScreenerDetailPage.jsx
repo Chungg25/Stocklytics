@@ -27,8 +27,8 @@ const ScreenerDetailPage = () => {
   useEffect(() => {
     // Fetch stocks and benchmark concurrently
       Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/stocks`).then(res => res.json()),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/benchmark?sector=${id}`).then(res => res.json())
+        fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stocks`).then(res => res.json()),
+        fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/benchmark?sector=${id}`).then(res => res.json())
       ])
     .then(([stocksData, benchmarkData]) => {
       setStocks(stocksData);
