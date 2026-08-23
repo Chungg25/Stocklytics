@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Target, Search, Moon, Settings, ChevronDown, LogOut, User } from 'lucide-react';
+import { useAgent } from '../../contexts/AgentContext';
+import { Target, Search, Moon, Settings, ChevronDown, LogOut, User, Bot } from 'lucide-react';
 
 const TopNav = () => {
   const { user, signOut } = useAuth();
+  const { toggleAgent, isAgentOpen } = useAgent();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef(null);
@@ -51,6 +53,14 @@ const TopNav = () => {
           <input className="bg-transparent text-sm text-white placeholder-text-muted outline-none w-full" placeholder="Search 10,000+ stocks..." />
         </div>
         
+        <button 
+          onClick={toggleAgent}
+          className={`p-2 rounded-lg flex items-center gap-2 transition-colors ${isAgentOpen ? 'bg-primary/20 text-primary' : 'hover:bg-dark-hover text-text-muted hover:text-text-primary'}`}
+        >
+          <Bot size={18} />
+          <span className="text-sm font-semibold hidden md:inline">Copilot</span>
+        </button>
+
         <button className="p-2 rounded-lg hover:bg-dark-hover text-text-muted hover:text-text-primary transition-colors">
           <Settings size={18} />
         </button>

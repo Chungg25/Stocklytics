@@ -12,8 +12,6 @@ const navItems = [
   { icon: Filter, label: 'SCREENERS', id: 'screeners', path: '/screeners' },
   { icon: List, label: 'COMPARE', id: 'compare', path: '/compare' },
   { icon: TrendingUp, label: 'CHART', id: 'chart', path: '/chart' },
-  { icon: BookOpen, label: 'BACKTEST', id: 'backtest', path: '/backtest' },
-  { icon: MessageCircle, label: 'AI CHAT', id: 'ai-chat', path: '/chat' },
 ];
 
 const Sidebar = () => {

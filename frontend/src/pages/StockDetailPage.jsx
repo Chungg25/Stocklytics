@@ -1,7 +1,6 @@
 import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageLayout from '../components/layout/PageLayout';
-import AgentPanel from '../components/AgentPanel';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { 
@@ -119,26 +118,6 @@ export default function StockDetailPage() {
       setAssessmentResult('**Error:** ' + err.message);
     } finally {
       setLoadingAssessment(false);
-    }
-  };
-
-  const handleAgentAction = (action) => {
-    if (action.type === 'change_ticker') {
-      setTicker(action.value.toUpperCase());
-      navigate(`/stock/${action.value.toUpperCase()}`, { replace: true });
-    } else if (action.type === 'add_indicator') {
-      const indicatorMap = {
-        'RSI': 'RSI@tv-basicstudies',
-        'MACD': 'MACD@tv-basicstudies',
-        'EMA': 'MAExp@tv-basicstudies',
-        'SMA': 'MASimple@tv-basicstudies',
-        'BB': 'BB@tv-basicstudies',
-        'VOL': 'Volume@tv-basicstudies',
-      };
-      const study = indicatorMap[action.value.toUpperCase()];
-      if (study) setStudies(prev => [...new Set([...prev, study])]);
-    } else if (action.type === 'run_analysis') {
-      handleAssessment(action.value);
     }
   };
 
@@ -417,9 +396,6 @@ export default function StockDetailPage() {
           </div>
         )}
       </div>
-
-      {/* Agent Panel */}
-      <AgentPanel ticker={ticker} onAction={handleAgentAction} />
     </PageLayout>
   );
 }
