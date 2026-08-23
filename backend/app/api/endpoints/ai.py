@@ -24,7 +24,7 @@ class AIAssessmentRequest(BaseModel):
     user_prompt: str = ""
 
 @router.post("/assessment")
-def run_ai_assessment(req: AIAssessmentRequest):
+async def run_ai_assessment(req: AIAssessmentRequest):
     return StreamingResponse(
         generate_ai_assessment(req.ticker, req.mode, req.user_prompt),
         media_type="text/event-stream"

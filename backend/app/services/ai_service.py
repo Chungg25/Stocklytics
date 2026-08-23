@@ -25,7 +25,7 @@ def generate_ai_analysis(tickers, prompt):
     except Exception as e:
         return f"**Error during AI Analysis:**\n\n```\n{str(e)}\n```"
 
-def generate_ai_assessment(ticker: str, mode: str, user_prompt: str = "", context: str = ""):
+async def generate_ai_assessment(ticker: str, mode: str, user_prompt: str = "", context: str = ""):
     # Fetch real-time context (News + Tech Indicators)
     try:
         # Fetch News
@@ -55,16 +55,13 @@ def generate_ai_assessment(ticker: str, mode: str, user_prompt: str = "", contex
     full_prompt = build_assessment_prompt(ticker, mode, enriched_context)
 
     try:
-        client = get_orca_client()
-        response = client.chat.completions.create(
-            model=ORCA_MODEL,
-            messages=[{"role": "user", "content": full_prompt}],
-            stream=True
-        )
+        from app.ai.agent import ChatAgent
+        agent = ChatAgent()
+        messages = [{"role": "user", "content": full_prompt}]
         
-        for chunk in response:
-            if chunk.choices and chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+        # Stream using the full agent loop (which supports Tool Calls and XML parsing!)
+        async for chunk in agent.stream_chat(messages):
+            yield chunk
                 
     except Exception as e:
         yield f"**Error during AI Assessment:**\n\n```\n{str(e)}\n```"
