@@ -150,11 +150,7 @@ export default function StockDetailPage() {
   ];
 
   const assessmentButtons = [
-    { mode: 'checklist', label: 'Checklist Nhanh', icon: CheckSquare, color: 'blue' },
-    { mode: 'research', label: 'Phân Tích Sâu', icon: FileText, color: 'purple' },
     { mode: 'team', label: 'Đánh giá Chuyên gia', icon: Users, color: 'green' },
-    { mode: 'pinescript', label: 'Code PineScript', icon: FileText, color: 'orange' },
-    { mode: 'tradingagents', label: 'Dự Đoán Giao Dịch', icon: Users, color: 'red' },
   ];
 
   const colorMap = { blue: 'bg-blue-600', purple: 'bg-purple-600', green: 'bg-stock-green', orange: 'bg-orange-600', red: 'bg-red-600' };

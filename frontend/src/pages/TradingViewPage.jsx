@@ -185,39 +185,11 @@ const TradingViewPage = () => {
           </h2>
           <div className="flex flex-wrap gap-4">
             <button 
-              onClick={() => handleAssessment('checklist')}
-              disabled={loadingAssessment}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'checklist' ? 'bg-blue-600 text-white shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-blue-600/80 border border-dark-border'}`}
-            >
-              <CheckSquare size={18} /> Checklist Nhanh
-            </button>
-            <button 
-              onClick={() => handleAssessment('research')}
-              disabled={loadingAssessment}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'research' ? 'bg-purple-600 text-white shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-purple-600/80 border border-dark-border'}`}
-            >
-              <FileText size={18} /> Phân Tích Sâu
-            </button>
-            <button 
               onClick={() => handleAssessment('team')}
               disabled={loadingAssessment}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'team' ? 'bg-stock-green text-dark-bg shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-stock-green hover:text-dark-bg border border-dark-border'}`}
             >
               <Users size={18} /> Đánh giá Chuyên gia
-            </button>
-            <button 
-              onClick={() => handleAssessment('pinescript')}
-              disabled={loadingAssessment}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'pinescript' ? 'bg-orange-600 text-white shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-orange-600/80 border border-dark-border'}`}
-            >
-              <FileText size={18} /> Code PineScript
-            </button>
-            <button 
-              onClick={() => handleAssessment('tradingagents')}
-              disabled={loadingAssessment}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'tradingagents' ? 'bg-red-600 text-white shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-red-600/80 border border-dark-border'}`}
-            >
-              <Users size={18} /> Dự Đoán Giao Dịch (Agents)
             </button>
           </div>
           
