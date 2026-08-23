@@ -1,6 +1,8 @@
 import json
+import yfinance as yf
 from app.ai.llm_client import get_orca_client, execute_with_fallback, get_active_key_status, ORCA_MODEL
 from app.ai.prompts import build_assessment_prompt
+from app.services.news_service import fetch_stock_news
 
 def generate_ai_analysis(tickers, prompt):
     if not tickers:
@@ -24,7 +26,33 @@ def generate_ai_analysis(tickers, prompt):
         return f"**Error during AI Analysis:**\n\n```\n{str(e)}\n```"
 
 def generate_ai_assessment(ticker: str, mode: str, user_prompt: str = "", context: str = ""):
-    full_prompt = build_assessment_prompt(ticker, mode, context)
+    # Fetch real-time context (News + Tech Indicators)
+    try:
+        # Fetch News
+        news = fetch_stock_news(ticker)
+        news_text = "No recent news."
+        if news:
+            news_text = "\n".join([f"- {n['title']} ({n['date']})" for n in news[:5]])
+        
+        # Fetch Indicators
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period="1y")
+        tech_text = "No technical data."
+        if not hist.empty:
+            current_price = hist['Close'].iloc[-1]
+            ma50 = hist['Close'].rolling(window=50).mean().iloc[-1]
+            ma200 = hist['Close'].rolling(window=200).mean().iloc[-1]
+            high52 = hist['High'].max()
+            low52 = hist['Low'].min()
+            vol = hist['Volume'].iloc[-1]
+            tech_text = f"Current Price: {current_price:.2f}\n50-Day MA: {ma50:.2f}\n200-Day MA: {ma200:.2f}\n52-Week High: {high52:.2f}\n52-Week Low: {low52:.2f}\nLatest Volume: {vol}"
+            
+        enriched_context = f"{context}\n\n[LATEST NEWS]\n{news_text}\n\n[TECHNICAL INDICATORS]\n{tech_text}"
+    except Exception as e:
+        enriched_context = context
+        print(f"Failed to fetch enriched context: {e}")
+
+    full_prompt = build_assessment_prompt(ticker, mode, enriched_context)
 
     try:
         client = get_orca_client()
