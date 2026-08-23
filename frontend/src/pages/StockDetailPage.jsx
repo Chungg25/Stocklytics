@@ -272,7 +272,13 @@ export default function StockDetailPage() {
                 )}
                 {assessmentResult && (
                   <div className="prose prose-invert max-w-none text-sm text-text-primary prose-headings:text-white prose-a:text-primary prose-strong:text-stock-green">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{assessmentResult}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {assessmentResult
+                        .replace(/\[ACTION:.*?\]/g, '')
+                        .replace(/<[^>]*tool_calls>[\s\S]*?<\/[^>]*tool_calls>/g, '')
+                        .replace(/<[^>]*tool_calls>[\s\S]*$/g, '')
+                        .replace(/```(?:xml|bash|json)?\s*```/g, '')}
+                    </ReactMarkdown>
                     {loadingAssessment && <span className="inline-block w-2 h-4 ml-1 bg-stock-green animate-pulse"></span>}
                   </div>
                 )}
