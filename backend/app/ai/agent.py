@@ -111,25 +111,35 @@ class ChatAgent:
 
             # 2. Custom XML Parser for Hallucinated Tool Calls (DeepSeek DSML/XML compatibility)
             if not tool_calls and ("<invoke" in final_content or "<WEBSEARCH" in final_content):
-                # Pattern 1: <invoke name="web_search"> <parameter name="query">...</parameter> </invoke>
+                # Pattern 1: <invoke name="ToolName"> <parameter name="paramName">value</parameter> </invoke>
                 invoke_pattern = r'<\s*invoke\s+name=["\'](.*?)["\']\s*>([\s\S]*?)<\s*/\s*invoke\s*>'
                 invokes = re.findall(invoke_pattern, final_content)
                 for name, body in invokes:
-                    if name in ["web_search", "web_search_with_citations", "search", "Bash"]:
-                        param_pattern = r'<\s*parameter\s+name=["\'](?:query|command)["\'][^>]*>([\s\S]*?)<\s*/\s*parameter\s*>'
-                        match = re.search(param_pattern, body)
-                        if match:
-                            query = match.group(1).strip()
-                            tool_calls.append({
-                                "id": f"call_xml_{len(tool_calls)}",
-                                "type": "function",
-                                "function": {
-                                    "name": "web_search_with_citations",
-                                    "arguments": json.dumps({"query": query})
-                                }
-                            })
-                            
-                # Pattern 2: <WEBSEARCH> <QUERY>...</QUERY> </WEBSEARCH>
+                    # Parse all parameters dynamically
+                    param_pattern = r'<\s*parameter\s+name=["\'](.*?)["\'][^>]*>([\s\S]*?)<\s*/\s*parameter\s*>'
+                    params = re.findall(param_pattern, body)
+                    args_dict = {}
+                    for p_name, p_val in params:
+                        val = p_val.strip()
+                        if (val.startswith('[') and val.endswith(']')) or (val.startswith('{') and val.endswith('}')):
+                            try:
+                                val = json.loads(val)
+                            except json.JSONDecodeError:
+                                pass
+                        args_dict[p_name] = val
+                    
+                    # Special mapping for legacy websearch
+                    if name in ["web_search", "search"]:
+                        name = "web_search_with_citations"
+                        
+                    tool_calls.append({
+                        "id": f"call_xml_{len(tool_calls)}",
+                        "type": "function",
+                        "function": {
+                            "name": name,
+                            "arguments": json.dumps(args_dict)
+                        }
+                    })
                 websearch_pattern = r'<\s*WEBSEARCH\s*>[\s\S]*?<\s*QUERY\s*>([\s\S]*?)<\s*/\s*QUERY\s*>[\s\S]*?<\s*/\s*WEBSEARCH\s*>'
                 websearches = re.findall(websearch_pattern, final_content)
                 for query in websearches:
