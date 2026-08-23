@@ -1,24 +1,19 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  LayoutGrid, Briefcase, Eye, Filter, List, BarChart2, 
-  Bitcoin, DollarSign, Activity, Bell, FileText, Sparkles, Globe, BookOpen, TrendingUp, Wallet
+  LayoutGrid, Briefcase, Eye, Filter, List, 
+  TrendingUp, BookOpen, MessageCircle
 } from 'lucide-react';
 
 const navItems = [
   { icon: LayoutGrid, label: 'TODAY', id: 'today', path: '/today' },
   { icon: Briefcase, label: 'PORTFOLIO', id: 'portfolio', path: '/portfolio' },
-  { icon: Eye, label: 'WATCHLIST', id: 'watchlist', path: '/watchlist' },
+  { icon: Eye, label: 'WATCHLIST', id: 'watchlist', path: '/portfolio' },
   { icon: Filter, label: 'SCREENERS', id: 'screeners', path: '/screeners' },
   { icon: List, label: 'COMPARE', id: 'compare', path: '/compare' },
-  { icon: TrendingUp, label: 'ADV CHART', id: 'adv-chart', path: '/chart' },
-  { icon: BarChart2, label: 'SIGNALS', id: 'signals', path: '/signals' },
-  { icon: Bitcoin, label: 'CRYPTO SIG', id: 'crypto-sig', path: '/crypto-sig' },
-  { icon: Globe, label: 'FOREX', id: 'forex', path: '#' },
-  { icon: BookOpen, label: 'STRATEGIES', id: 'strategies', path: '/backtest' },
-  { icon: Bell, label: 'ALERTS', id: 'alerts', path: '#' },
-  { icon: FileText, label: 'NOTES', id: 'notes', path: '/notes' },
-  { icon: Sparkles, label: 'AI PICKS', id: 'ai-picks', path: '/ai-picks' },
+  { icon: TrendingUp, label: 'CHART', id: 'chart', path: '/chart' },
+  { icon: BookOpen, label: 'BACKTEST', id: 'backtest', path: '/backtest' },
+  { icon: MessageCircle, label: 'AI CHAT', id: 'ai-chat', path: '/chat' },
 ];
 
 const Sidebar = () => {

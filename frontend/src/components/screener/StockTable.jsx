@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Star, Bell, Copy, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 
@@ -8,6 +9,7 @@ const formatPercent = (val) => {
 };
 
 const StockTableRow = ({ stock }) => {
+  const navigate = useNavigate();
   const isPositiveChange = stock.change > 0;
   const changeColorClass = isPositiveChange ? 'text-stock-green' : 'text-stock-red';
   
@@ -20,7 +22,10 @@ const StockTableRow = ({ stock }) => {
       <td className="py-4 px-2">
         <div className="flex items-center gap-3">
           <div>
-            <div className="font-bold text-white flex items-center gap-2">
+            <div 
+              className="font-bold text-white flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
+              onClick={() => navigate(`/stock/${stock.ticker}`)}
+            >
               {stock.ticker}
               <div className="hidden group-hover:flex items-center gap-1.5 text-text-muted">
                 <Star size={14} className="hover:text-yellow-500 cursor-pointer" />

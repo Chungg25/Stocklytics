@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.api.endpoints import stocks, ai, trading, chat
+from app.api.endpoints import stocks, ai, trading, chat, news
 from app.core.scheduler import start_scheduler, stop_scheduler
 
 @asynccontextmanager
@@ -35,3 +35,4 @@ app.include_router(stocks.router, prefix="/api", tags=["stocks"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 app.include_router(trading.router, prefix="/api/trading", tags=["trading"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(news.router, prefix="/api/news", tags=["news"])

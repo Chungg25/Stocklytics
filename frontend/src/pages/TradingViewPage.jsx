@@ -3,6 +3,7 @@ import PageLayout from '../components/layout/PageLayout';
 import { TrendingUp, Search, CheckSquare, FileText, Users, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import AgentPanel from '../components/AgentPanel';
 
 const AdvancedRealTimeChart = lazy(() => import('react-ts-tradingview-widgets').then(m => ({ default: m.AdvancedRealTimeChart })));
 
@@ -240,6 +241,16 @@ const TradingViewPage = () => {
           )}
         </div>
       </div>
+      <AgentPanel ticker={symbol} onAction={(action) => {
+        if (action.type === 'change_ticker') setSymbol(action.value.toUpperCase());
+        if (action.type === 'run_analysis') handleAssessment(action.value);
+        if (action.type === 'add_indicator') {
+          // simple indicator mapping
+          const mapped = action.value.toUpperCase() === 'RSI' ? 'RSI@tv-basicstudies' :
+                         action.value.toUpperCase() === 'MACD' ? 'MACD@tv-basicstudies' : null;
+          if(mapped) setStudies(p => [...new Set([...p, mapped])]);
+        }
+      }} />
     </PageLayout>
   );
 };
