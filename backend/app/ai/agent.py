@@ -162,9 +162,20 @@ class ChatAgent:
                     kwargs = json.loads(tool_call["function"]["arguments"])
                     logger.info(f"Agent calling tool: {func_name} with {kwargs}")
                     
+                    # Yield intermediate thinking/processing status to UI
+                    if func_name == "TaskCreate":
+                        yield f"\n\n> 🧠 **Đang giao việc cho Đội chuyên gia (Multi-Agent Task)**...\n> *Quá trình này sẽ tốn 1-3 phút do các chuyên gia phải lần lượt phân tích. Vui lòng chờ...*\n\n"
+                    elif func_name == "TeamCreate":
+                        yield f"\n\n> 👥 **Đang thành lập Đội chuyên gia...**\n\n"
+                    elif func_name == "web_search_with_citations":
+                        yield f"\n\n> 🌐 **Đang tra cứu dữ liệu thời gian thực trên Internet...**\n\n"
+                    else:
+                        yield f"\n\n> ⚙️ **Đang xử lý dữ liệu ({func_name})...**\n\n"
+                    
                     # Execute the tool silently without yielding to the chat stream
-                    # The frontend will just show the "Analyzing..." bouncing dots.
                     result = execute_tool(func_name, **kwargs)
+                    
+                    yield f"> ✅ **Hoàn thành bước xử lý.**\n\n"
                     
                 except Exception as e:
                     logger.error(f"Error executing {func_name}: {e}")
