@@ -123,7 +123,7 @@ export default function GlobalAgentPanel() {
   if (!isAgentOpen) return null;
 
   return (
-    <div className={`${isExpanded ? 'w-[600px]' : 'w-[400px]'} border-l border-white/5 bg-[#0B0E14]/95 backdrop-blur-2xl flex flex-col shadow-[-20px_0_40px_-15px_rgba(0,0,0,0.7)] relative z-40 transition-all duration-300 h-full`}>
+    <div className={`fixed right-0 top-14 bottom-0 ${isExpanded ? 'w-[600px]' : 'w-[400px]'} border-l border-white/5 bg-[#0B0E14]/95 backdrop-blur-2xl flex flex-col shadow-[-20px_0_40px_-15px_rgba(0,0,0,0.7)] z-50 transition-all duration-300`}>
       
       {/* Sleek Top Glow */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50"></div>
@@ -225,14 +225,14 @@ export default function GlobalAgentPanel() {
 
       {/* Floating Input Area */}
       <div className="p-5 pt-2 shrink-0 bg-transparent relative z-10">
-        <div className="flex items-center bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all p-1.5 shadow-2xl">
+        <div className="flex items-center bg-[#1e293b]/90 backdrop-blur-md rounded-2xl border border-white/10 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all p-1.5 shadow-2xl">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Hỏi tôi bất cứ điều gì..."
-            className="flex-1 bg-transparent px-4 py-2.5 text-white text-[15px] focus:outline-none placeholder-text-muted/60"
+            className="flex-1 bg-transparent px-4 py-2.5 text-white text-[15px] focus:outline-none placeholder-text-muted"
           />
           <button
             onClick={handleSend}
