@@ -123,46 +123,58 @@ export default function GlobalAgentPanel() {
   if (!isAgentOpen) return null;
 
   return (
-    <div className={`${isExpanded ? 'w-[600px]' : 'w-[400px]'} border-l border-dark-border bg-dark-sidebar flex flex-col shadow-2xl relative z-40 transition-all duration-300 h-full`}>
+    <div className={`${isExpanded ? 'w-[600px]' : 'w-[400px]'} border-l border-white/5 bg-[#0B0E14]/95 backdrop-blur-2xl flex flex-col shadow-[-20px_0_40px_-15px_rgba(0,0,0,0.7)] relative z-40 transition-all duration-300 h-full`}>
+      
+      {/* Sleek Top Glow */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50"></div>
+
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-dark-border bg-dark-card shrink-0">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-transparent shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-stock-green rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-            <Bot size={18} className="text-white" />
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/40 blur-md rounded-full"></div>
+            <div className="w-9 h-9 bg-gradient-to-br from-primary to-[#00f2fe] rounded-xl flex items-center justify-center shadow-lg relative z-10 border border-white/20">
+              <Bot size={20} className="text-white drop-shadow-md" />
+            </div>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white tracking-wide">Alphahubiq Copilot</h3>
-            <p className="text-[10px] text-stock-green uppercase font-semibold">
-              {currentTicker ? `Làm việc với ${currentTicker}` : 'Trợ lý toàn cầu'}
+            <h3 className="text-[15px] font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-wide">
+              Alphahubiq Copilot
+            </h3>
+            <p className="text-[10px] text-stock-green uppercase font-bold tracking-wider mt-0.5">
+              {currentTicker ? `LÀM VIỆC VỚI ${currentTicker}` : 'TRỢ LÝ TOÀN CẦU'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {messages.length > 0 && (
-            <button onClick={clearMessages} className="text-text-muted hover:text-red-400 transition-colors bg-dark-bg p-1.5 rounded-md border border-dark-border hover:border-red-400/50" title="Xóa lịch sử chat">
+            <button onClick={clearMessages} className="text-text-muted hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-white/5" title="Xóa lịch sử chat">
               <Trash2 size={16} />
             </button>
           )}
-          <button onClick={() => setIsExpanded(!isExpanded)} className="text-text-muted hover:text-white transition-colors bg-dark-bg p-1.5 rounded-md border border-dark-border hover:border-text-muted" title={isExpanded ? "Thu nhỏ" : "Phóng to"}>
+          <button onClick={() => setIsExpanded(!isExpanded)} className="text-text-muted hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" title={isExpanded ? "Thu nhỏ" : "Phóng to"}>
             {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
-          <button onClick={toggleAgent} className="text-text-muted hover:text-white transition-colors bg-dark-bg p-1.5 rounded-md border border-dark-border hover:border-text-muted" title="Đóng">
-            <X size={16} />
+          <button onClick={toggleAgent} className="text-text-muted hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" title="Đóng">
+            <X size={18} />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
+      <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar relative">
         {messages.length === 0 && (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-dark-bg rounded-full flex items-center justify-center mx-auto mb-4 border border-dark-border">
-              <Bot size={32} className="text-primary" />
+          <div className="flex flex-col items-center justify-center h-full text-center pb-10">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-150"></div>
+              <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto border border-white/10 relative z-10 backdrop-blur-sm shadow-xl">
+                <Bot size={40} className="text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+              </div>
             </div>
-            <h3 className="text-white font-bold mb-2">Tôi có thể giúp gì cho bạn?</h3>
-            <p className="text-text-secondary text-sm px-4">Ra lệnh điều hướng web, hỏi thông tin tài chính, hoặc phân tích kỹ thuật ngay tại đây.</p>
+            <h3 className="text-xl text-white font-bold mb-2 tracking-tight">Tôi có thể giúp gì cho bạn?</h3>
+            <p className="text-text-muted text-sm px-6 max-w-xs leading-relaxed">Ra lệnh điều hướng web, hỏi thông tin tài chính, hoặc phân tích kỹ thuật ngay tại đây.</p>
             
-            <div className="mt-6 space-y-2">
+            <div className="mt-8 space-y-3 w-full max-w-[90%]">
               {[
                 `Mở trang danh mục đầu tư`, 
                 `Phân tích mã NVDA`, 
@@ -171,9 +183,10 @@ export default function GlobalAgentPanel() {
                 <button
                   key={i}
                   onClick={() => { setInput(suggestion); }}
-                  className="block w-full text-left px-4 py-3 text-sm text-text-primary bg-dark-bg rounded-lg hover:bg-dark-hover transition-colors border border-dark-border hover:border-primary/50"
+                  className="block w-full text-left px-5 py-3.5 text-sm font-medium text-text-primary bg-white/5 rounded-xl hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] transition-all border border-white/5 hover:border-white/15 group"
                 >
-                  {suggestion}
+                  <span className="group-hover:text-white transition-colors">{suggestion}</span>
+                  <span className="float-right opacity-0 group-hover:opacity-100 transition-opacity text-primary">→</span>
                 </button>
               ))}
             </div>
@@ -182,12 +195,12 @@ export default function GlobalAgentPanel() {
         
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-dark-border' : 'bg-primary/20 text-primary'}`}>
-              {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-white/10 border border-white/10' : 'bg-primary/20 text-primary border border-primary/30'}`}>
+              {msg.role === 'user' ? <User size={14} className="text-white" /> : <Bot size={14} />}
             </div>
-            <div className={`p-3 rounded-2xl max-w-[85%] text-sm ${msg.role === 'user' ? 'bg-dark-border text-white rounded-tr-none' : 'bg-[#1e293b] text-text-primary rounded-tl-none border border-dark-border'}`}>
+            <div className={`p-4 rounded-2xl max-w-[85%] text-[14px] leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-white/10 text-white rounded-tr-sm border border-white/5' : 'bg-transparent text-text-primary rounded-tl-sm border border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent'}`}>
               {msg.role === 'assistant' ? (
-                <div className="prose prose-invert prose-sm max-w-none">
+                <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/10">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content.replace(/\[ACTION:.*?\]/g, '')}</ReactMarkdown>
                 </div>
               ) : (
@@ -198,34 +211,35 @@ export default function GlobalAgentPanel() {
         ))}
         {loading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0">
-              <Bot size={16} />
+            <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 border border-primary/30">
+              <Bot size={14} />
             </div>
-            <div className="p-3 rounded-2xl bg-[#1e293b] text-text-secondary rounded-tl-none flex items-center gap-2 border border-dark-border">
-              <Loader2 size={14} className="animate-spin text-primary" /> Đang suy nghĩ...
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent text-text-secondary rounded-tl-sm flex items-center gap-3 border border-white/5 shadow-sm">
+              <Loader2 size={16} className="animate-spin text-primary" /> 
+              <span className="text-sm font-medium animate-pulse">Đang suy nghĩ...</span>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-4 bg-dark-card border-t border-dark-border shrink-0">
-        <div className="flex items-center bg-dark-bg rounded-xl border border-dark-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all p-1">
+      {/* Floating Input Area */}
+      <div className="p-5 pt-2 shrink-0 bg-transparent relative z-10">
+        <div className="flex items-center bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all p-1.5 shadow-2xl">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Gõ lệnh hoặc câu hỏi..."
-            className="flex-1 bg-transparent px-3 py-2 text-white text-sm focus:outline-none"
+            placeholder="Hỏi tôi bất cứ điều gì..."
+            className="flex-1 bg-transparent px-4 py-2.5 text-white text-[15px] focus:outline-none placeholder-text-muted/60"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || loading}
-            className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white disabled:opacity-50 disabled:bg-dark-border transition-colors m-1 hover:bg-primary-hover"
+            className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:from-white/10 disabled:to-white/5 transition-all m-0.5 hover:shadow-[0_0_15px_rgba(59,130,246,0.6)] hover:scale-105 active:scale-95"
           >
-            <Send size={14} className="ml-1" />
+            <Send size={16} className="ml-1" />
           </button>
         </div>
       </div>
