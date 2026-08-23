@@ -12,7 +12,7 @@ def get_orca_client():
     api_key = os.getenv("ORCA_API_KEY")
     if not api_key:
         raise Exception("ORCA_API_KEY is missing in .env")
-    return OpenAI(base_url="https://api.orcarouter.com/v1", api_key=api_key)
+    return OpenAI(base_url="https://api.orcarouter.ai/v1", api_key=api_key)
 
 def get_groq_client():
     """Fallback LLM client: Groq"""
