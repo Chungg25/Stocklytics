@@ -67,11 +67,6 @@ def execute_tool(name: str, **kwargs) -> Any:
     Executes a tool by name with the given arguments.
     """
     func = get_tool_callable(name)
-    sig = inspect.signature(func)
-    
-    if "status_callback" not in sig.parameters:
-        kwargs.pop("status_callback", None)
-        
     try:
         return func(**kwargs)
     except Exception as e:
