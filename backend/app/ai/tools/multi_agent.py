@@ -107,19 +107,15 @@ def create_task(team_id: str, task: str) -> Dict[str, Any]:
     agents = _TEAMS[team_id]
     results = []
     
-    # Run agents concurrently to save time
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_agent = {executor.submit(_run_single_agent, agent, task): agent for agent in agents}
-        
-        for future in as_completed(future_to_agent):
-            agent = future_to_agent[future]
-            name = agent.get("name", "Unknown")
-            try:
-                res = future.result()
-                results.append(res)
-            except Exception as e:
-                logger.error(f"Agent {name} raised an exception: {e}")
-                results.append({"agent": name, "status": "error", "output": str(e)})
+    # Run agents sequentially to avoid API Free Tier Rate Limits (429 Too Many Requests)
+    for agent in agents:
+        name = agent.get("name", "Unknown")
+        try:
+            res = _run_single_agent(agent, task)
+            results.append(res)
+        except Exception as e:
+            logger.error(f"Agent {name} raised an exception: {e}")
+            results.append({"agent": name, "status": "error", "output": str(e)})
                 
     return {
         "status": "success",
