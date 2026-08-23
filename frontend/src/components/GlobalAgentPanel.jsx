@@ -201,7 +201,9 @@ export default function GlobalAgentPanel() {
             <div className={`p-4 rounded-2xl max-w-[85%] text-[14px] leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-white/10 text-white rounded-tr-sm border border-white/5' : 'bg-transparent text-text-primary rounded-tl-sm border border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent'}`}>
               {msg.role === 'assistant' ? (
                 <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/10">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content.replace(/\[ACTION:.*?\]/g, '')}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content.replace(/\[ACTION:.*?\]/g, '').replace(/<｜｜DSML｜｜.*?<\/｜｜DSML｜｜tool_calls>/gs, '').replace(/<｜｜DSML｜｜.*?$/s, '')}
+                  </ReactMarkdown>
                 </div>
               ) : (
                 msg.content
