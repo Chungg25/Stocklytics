@@ -202,7 +202,10 @@ export default function GlobalAgentPanel() {
               {msg.role === 'assistant' ? (
                 <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/10">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.content.replace(/\[ACTION:.*?\]/g, '').replace(/<｜｜DSML｜｜.*?<\/｜｜DSML｜｜tool_calls>/gs, '').replace(/<｜｜DSML｜｜.*?$/s, '')}
+                    {msg.content
+                      .replace(/\[ACTION:.*?\]/g, '')
+                      .replace(/<(?:｜｜DSML｜｜)?tool_calls>.*?<\/(?:｜｜DSML｜｜)?tool_calls>/gs, '')
+                      .replace(/<(?:｜｜DSML｜｜)?tool_calls>.*?$/s, '')}
                   </ReactMarkdown>
                 </div>
               ) : (
