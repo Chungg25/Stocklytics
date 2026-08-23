@@ -110,7 +110,27 @@ class ChatAgent:
             import re
 
             # 2. Custom XML Parser for Hallucinated Tool Calls (DeepSeek DSML/XML compatibility)
-            if not tool_calls and ("<invoke" in final_content or "<WEBSEARCH" in final_content):
+            if not tool_calls and ("<invoke" in final_content or "<WEBSEARCH" in final_content or "<tool_call" in final_content):
+                # Pattern 0: <tool_calls> JSON_ARRAY </tool_calls> or <tool_call> JSON_OBJECT </tool_call>
+                tc_pattern = r'<\s*tool_call(?:s)?\s*>([\s\S]*?)<\s*/\s*tool_call(?:s)?\s*>'
+                tcs = re.findall(tc_pattern, final_content)
+                for tc_body in tcs:
+                    try:
+                        tc_json = json.loads(tc_body.strip())
+                        if isinstance(tc_json, dict):
+                            tc_json = [tc_json]
+                        for call in tc_json:
+                            tool_calls.append({
+                                "id": f"call_xml_qwen_{len(tool_calls)}",
+                                "type": "function",
+                                "function": {
+                                    "name": call.get("name", ""),
+                                    "arguments": json.dumps(call.get("arguments", {})) if isinstance(call.get("arguments"), dict) else call.get("arguments", "")
+                                }
+                            })
+                    except json.JSONDecodeError:
+                        pass
+                
                 # Pattern 1: <invoke name="ToolName"> <parameter name="paramName">value</parameter> </invoke>
                 invoke_pattern = r'<\s*invoke\s+name=["\'](.*?)["\']\s*>([\s\S]*?)<\s*/\s*invoke\s*>'
                 invokes = re.findall(invoke_pattern, final_content)
@@ -168,19 +188,29 @@ class ChatAgent:
 
             for tool_call in tool_calls:
                 func_name = tool_call["function"]["name"]
+                
+                # Yield intermediate thinking/processing status to UI BEFORE parsing arguments
+                if func_name == "TaskCreate":
+                    yield f"\n\n> 🧠 **Đang giao việc cho Đội chuyên gia (Multi-Agent Task)**...\n> *Quá trình này sẽ tốn 1-3 phút do các chuyên gia phải lần lượt phân tích. Vui lòng chờ...*\n\n"
+                elif func_name == "TeamCreate":
+                    yield f"\n\n> 👥 **Đang thành lập Đội chuyên gia...**\n\n"
+                elif func_name == "web_search_with_citations":
+                    yield f"\n\n> 🌐 **Đang tra cứu dữ liệu thời gian thực trên Internet...**\n\n"
+                else:
+                    yield f"\n\n> ⚙️ **Đang xử lý dữ liệu ({func_name})...**\n\n"
+                
                 try:
-                    kwargs = json.loads(tool_call["function"]["arguments"])
+                    import ast
+                    args_str = tool_call["function"]["arguments"]
+                    try:
+                        kwargs = json.loads(args_str)
+                    except json.JSONDecodeError:
+                        # Fallback for Qwen's malformed JSON (e.g., single quotes)
+                        kwargs = ast.literal_eval(args_str)
+                        if not isinstance(kwargs, dict):
+                            raise ValueError("Parsed arguments must be a dictionary")
+                            
                     logger.info(f"Agent calling tool: {func_name} with {kwargs}")
-                    
-                    # Yield intermediate thinking/processing status to UI
-                    if func_name == "TaskCreate":
-                        yield f"\n\n> 🧠 **Đang giao việc cho Đội chuyên gia (Multi-Agent Task)**...\n> *Quá trình này sẽ tốn 1-3 phút do các chuyên gia phải lần lượt phân tích. Vui lòng chờ...*\n\n"
-                    elif func_name == "TeamCreate":
-                        yield f"\n\n> 👥 **Đang thành lập Đội chuyên gia...**\n\n"
-                    elif func_name == "web_search_with_citations":
-                        yield f"\n\n> 🌐 **Đang tra cứu dữ liệu thời gian thực trên Internet...**\n\n"
-                    else:
-                        yield f"\n\n> ⚙️ **Đang xử lý dữ liệu ({func_name})...**\n\n"
                     
                     # Execute the tool silently without yielding to the chat stream
                     result = execute_tool(func_name, **kwargs)
@@ -190,6 +220,7 @@ class ChatAgent:
                 except Exception as e:
                     logger.error(f"Error executing {func_name}: {e}")
                     result = {"error": str(e)}
+                    yield f"> ❌ **Lỗi gọi công cụ {func_name}:** {str(e)}\n\n"
 
                 # Truncate or Summarize tool results to prevent Groq Rate Limit (8000 TPM limit)
                 result_str = json.dumps(result, ensure_ascii=False)
