@@ -204,8 +204,9 @@ export default function GlobalAgentPanel() {
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {msg.content
                       .replace(/\[ACTION:.*?\]/g, '')
-                      .replace(/<(?:｜｜DSML｜｜)?tool_calls>.*?<\/(?:｜｜DSML｜｜)?tool_calls>/gs, '')
-                      .replace(/<(?:｜｜DSML｜｜)?tool_calls>.*?$/s, '')}
+                      .replace(/<(?:｜｜DSML｜｜)?tool_calls>[\s\S]*?<\/(?:｜｜DSML｜｜)?tool_calls>/g, '')
+                      .replace(/<(?:｜｜DSML｜｜)?tool_calls>[\s\S]*$/g, '')
+                      .replace(/```(?:xml|bash|json)?\s*```/g, '')}
                   </ReactMarkdown>
                 </div>
               ) : (
