@@ -150,7 +150,7 @@ export default function StockDetailPage() {
   ];
 
   const assessmentButtons = [
-    { mode: 'team', label: 'Đánh giá Chuyên gia', icon: Users, color: 'green' },
+    { mode: 'team', label: 'Đánh giá', icon: Users, color: 'green' },
   ];
 
   const colorMap = { blue: 'bg-blue-600', purple: 'bg-purple-600', green: 'bg-stock-green', orange: 'bg-orange-600', red: 'bg-red-600' };

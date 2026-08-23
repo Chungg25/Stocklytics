@@ -189,7 +189,7 @@ const TradingViewPage = () => {
               disabled={loadingAssessment}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'team' ? 'bg-stock-green text-dark-bg shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-stock-green hover:text-dark-bg border border-dark-border'}`}
             >
-              <Users size={18} /> Đánh giá Chuyên gia
+              <Users size={18} /> Đánh giá
             </button>
           </div>
           
