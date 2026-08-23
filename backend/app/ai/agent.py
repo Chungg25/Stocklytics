@@ -107,7 +107,42 @@ class ChatAgent:
                 yield f"\n\n__ERROR__:{friendly_error}\n\n"
                 break
 
-            # 2. If no tool calls, we are done!
+            import re
+
+            # 2. Custom XML Parser for Hallucinated Tool Calls (DeepSeek DSML/XML compatibility)
+            if not tool_calls and ("<invoke" in final_content or "<WEBSEARCH" in final_content):
+                # Pattern 1: <invoke name="web_search"> <parameter name="query">...</parameter> </invoke>
+                invoke_pattern = r'<\s*invoke\s+name=["\'](.*?)["\']\s*>([\s\S]*?)<\s*/\s*invoke\s*>'
+                invokes = re.findall(invoke_pattern, final_content)
+                for name, body in invokes:
+                    if name in ["web_search", "web_search_with_citations", "search", "Bash"]:
+                        param_pattern = r'<\s*parameter\s+name=["\'](?:query|command)["\'][^>]*>([\s\S]*?)<\s*/\s*parameter\s*>'
+                        match = re.search(param_pattern, body)
+                        if match:
+                            query = match.group(1).strip()
+                            tool_calls.append({
+                                "id": f"call_xml_{len(tool_calls)}",
+                                "type": "function",
+                                "function": {
+                                    "name": "web_search_with_citations",
+                                    "arguments": json.dumps({"query": query})
+                                }
+                            })
+                            
+                # Pattern 2: <WEBSEARCH> <QUERY>...</QUERY> </WEBSEARCH>
+                websearch_pattern = r'<\s*WEBSEARCH\s*>[\s\S]*?<\s*QUERY\s*>([\s\S]*?)<\s*/\s*QUERY\s*>[\s\S]*?<\s*/\s*WEBSEARCH\s*>'
+                websearches = re.findall(websearch_pattern, final_content)
+                for query in websearches:
+                    tool_calls.append({
+                        "id": f"call_xml_ws_{len(tool_calls)}",
+                        "type": "function",
+                        "function": {
+                            "name": "web_search_with_citations",
+                            "arguments": json.dumps({"query": query.strip()})
+                        }
+                    })
+
+            # 2.5 If no tool calls (JSON or XML), we are done!
             if not tool_calls:
                 # Add assistant message to history
                 messages.append({"role": "assistant", "content": final_content})
@@ -117,7 +152,7 @@ class ChatAgent:
             # Add assistant's tool call request to messages
             messages.append({
                 "role": "assistant",
-                "content": None,
+                "content": final_content if final_content else None,
                 "tool_calls": tool_calls
             })
 
