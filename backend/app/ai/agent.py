@@ -172,10 +172,38 @@ class ChatAgent:
                     else:
                         yield f"\n\n> ⚙️ **Đang xử lý dữ liệu ({func_name})...**\n\n"
                     
-                    # Execute the tool silently without yielding to the chat stream
-                    result = execute_tool(func_name, **kwargs)
+                    # Execute the tool in a background thread so we can stream its intermediate status
+                    import asyncio
+                    from concurrent.futures import ThreadPoolExecutor
                     
-                    yield f"> ✅ **Hoàn thành bước xử lý.**\n\n"
+                    queue = asyncio.Queue()
+                    loop = asyncio.get_running_loop()
+                    
+                    def status_callback(msg: str):
+                        loop.call_soon_threadsafe(queue.put_nowait, msg)
+                        
+                    kwargs["status_callback"] = status_callback
+                    
+                    with ThreadPoolExecutor(max_workers=1) as executor:
+                        future = loop.run_in_executor(executor, lambda: execute_tool(func_name, **kwargs))
+                        
+                        while not future.done():
+                            try:
+                                msg = await asyncio.wait_for(queue.get(), timeout=0.5)
+                                yield msg
+                            except asyncio.TimeoutError:
+                                pass
+                        
+                        # Flush any remaining messages
+                        while not queue.empty():
+                            yield queue.get_nowait()
+                            
+                        result = future.result()
+                    
+                    if func_name != "TaskCreate":
+                        yield f"> ✅ **Hoàn thành bước xử lý.**\n\n"
+                    else:
+                        yield f"> ✅ **Tất cả chuyên gia đã phân tích xong! Đang tổng hợp báo cáo...**\n\n"
                     
                 except Exception as e:
                     logger.error(f"Error executing {func_name}: {e}")

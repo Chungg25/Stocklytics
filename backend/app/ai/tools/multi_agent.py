@@ -99,8 +99,8 @@ def _run_single_agent(agent: Dict[str, str], task: str) -> Dict[str, str]:
         "required": ["team_id", "task"]
     }
 )
-def create_task(team_id: str, task: str) -> Dict[str, Any]:
-    """Executes a task across all agents in the team concurrently."""
+def create_task(team_id: str, task: str, status_callback=None) -> Dict[str, Any]:
+    """Executes a task across all agents in the team sequentially."""
     if team_id not in _TEAMS:
         return {"error": f"Team ID {team_id} not found. Please run TeamCreate first."}
     
@@ -110,9 +110,13 @@ def create_task(team_id: str, task: str) -> Dict[str, Any]:
     # Run agents sequentially to avoid API Free Tier Rate Limits (429 Too Many Requests)
     for agent in agents:
         name = agent.get("name", "Unknown")
+        if status_callback:
+            status_callback(f"> 👨‍💼 **Chuyên gia {name}** đang phân tích...\n")
         try:
             res = _run_single_agent(agent, task)
             results.append(res)
+            if status_callback:
+                status_callback(f"> ✅ **Chuyên gia {name}** đã phân tích xong.\n\n")
         except Exception as e:
             logger.error(f"Agent {name} raised an exception: {e}")
             results.append({"agent": name, "status": "error", "output": str(e)})
