@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Loader2, Bot, User, Maximize2, Minimize2 } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Bot, User, Maximize2, Minimize2, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAgent } from '../contexts/AgentContext';
 
 export default function GlobalAgentPanel() {
-  const { isAgentOpen, toggleAgent, messages, setMessages, addMessage } = useAgent();
+  const { isAgentOpen, toggleAgent, messages, setMessages, addMessage, clearMessages } = useAgent();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -122,7 +123,7 @@ export default function GlobalAgentPanel() {
   if (!isAgentOpen) return null;
 
   return (
-    <div className="w-[400px] border-l border-dark-border bg-dark-sidebar flex flex-col shadow-2xl relative z-40 transition-all duration-300 h-full">
+    <div className={`${isExpanded ? 'w-[600px]' : 'w-[400px]'} border-l border-dark-border bg-dark-sidebar flex flex-col shadow-2xl relative z-40 transition-all duration-300 h-full`}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-dark-border bg-dark-card shrink-0">
         <div className="flex items-center gap-3">
@@ -136,9 +137,19 @@ export default function GlobalAgentPanel() {
             </p>
           </div>
         </div>
-        <button onClick={toggleAgent} className="text-text-muted hover:text-white transition-colors bg-dark-bg p-1.5 rounded-md border border-dark-border hover:border-text-muted">
-          <Minimize2 size={16} />
-        </button>
+        <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <button onClick={clearMessages} className="text-text-muted hover:text-red-400 transition-colors bg-dark-bg p-1.5 rounded-md border border-dark-border hover:border-red-400/50" title="Xóa lịch sử chat">
+              <Trash2 size={16} />
+            </button>
+          )}
+          <button onClick={() => setIsExpanded(!isExpanded)} className="text-text-muted hover:text-white transition-colors bg-dark-bg p-1.5 rounded-md border border-dark-border hover:border-text-muted" title={isExpanded ? "Thu nhỏ" : "Phóng to"}>
+            {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+          <button onClick={toggleAgent} className="text-text-muted hover:text-white transition-colors bg-dark-bg p-1.5 rounded-md border border-dark-border hover:border-text-muted" title="Đóng">
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}

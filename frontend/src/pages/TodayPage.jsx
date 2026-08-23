@@ -122,14 +122,6 @@ const TodayPage = () => {
         <StockTable stocks={displayedStocks} loading={loading} />
       </div>
 
-      {/* Floating Ask AI Button */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-primary hover:bg-primary-hover rounded-full shadow-lg shadow-primary/30 flex items-center justify-center text-white transition-transform hover:scale-105 z-50">
-        <div className="relative">
-          <span className="absolute -top-6 -right-2 text-[10px] font-bold text-primary whitespace-nowrap">ASK AI</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
-        </div>
-      </button>
-
     </PageLayout>
   );
 };
