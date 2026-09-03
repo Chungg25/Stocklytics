@@ -30,7 +30,7 @@ export default function StockDetailPage() {
 
   return (
     <PageLayout>
-      <div className="flex flex-col h-[calc(100vh-2rem)] min-h-[800px] pb-4">
+      <div className="flex flex-col min-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 bg-dark-card p-3 rounded-xl border border-dark-border shadow-sm">
           <div className="flex items-center gap-4">
@@ -70,10 +70,10 @@ export default function StockDetailPage() {
         </div>
 
         {/* Main Content Area - 75/25 Split */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4">
           
           {/* Left Panel: Chart (75%) */}
-          <div className="flex-none lg:flex-1 lg:w-3/4 h-[500px] lg:h-full">
+          <div className="flex-none lg:flex-1 lg:w-3/4 h-[600px] lg:min-h-[800px]">
             <StockChartPanel ticker={ticker} />
           </div>
           
