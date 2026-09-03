@@ -216,7 +216,7 @@ def _calc_technical(history: list) -> dict:
             macd_signal = "bullish" if macd_line > signal_line else "bearish"
 
     # Volatility (annualized)
-    returns = np.diff(closes[-60:]) / closes[-61:-1] if len(closes) >= 61 else np.array([])
+    returns = np.diff(closes[-61:]) / closes[-61:-1] if len(closes) >= 61 else np.array([])
     volatility = round(float(np.std(returns) * np.sqrt(252)), 4) if len(returns) > 10 else None
 
     # Sharpe (simplified, risk-free rate = 4.5%)
