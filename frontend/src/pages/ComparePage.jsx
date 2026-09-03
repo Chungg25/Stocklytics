@@ -43,8 +43,15 @@ const ComparePage = () => {
       try {
         const response = await fetch(`${API_URL}/api/trading/groups`);
         const resData = await response.json();
-        if (resData.status === 'success') {
-          setGroups(Array.isArray(resData.groups) ? resData.groups : []);
+        if (resData.status === 'success' && resData.groups && Object.keys(resData.groups).length > 0) {
+          setGroups(resData.groups);
+        } else {
+          // Default groups if empty or failed to load
+          setGroups({
+            "Tech Giants": ["AAPL", "MSFT", "GOOGL", "AMZN", "META"],
+            "Semiconductors": ["NVDA", "AMD", "TSM", "AVGO", "INTC"],
+            "AI Winners": ["NVDA", "SMCI", "PLTR", "ARM", "CRWD"]
+          });
         }
       } catch (err) {
         console.error("Failed to load stock groups:", err);
