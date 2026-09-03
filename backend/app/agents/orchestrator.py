@@ -72,11 +72,13 @@ def analyze_stock(ticker: str, user_id: str = None, save: bool = True) -> dict:
         "valuation": {
             "dcf": calc_result.get("dcf", {}),
             "multiples": calc_result.get("multiples", {}),
+            "multiples_valuation": calc_result.get("multiples_valuation", {}),
         },
         "quality": calc_result.get("quality", {}),
         "technical": calc_result.get("technical", {}),
         "risk": calc_result.get("risk", {}),
         "growth": calc_result.get("growth", {}),
+        "historical": calc_result.get("historical", {}),
         "perspectives": analyst_result.get("perspectives", {}),
         "composite_stars": analyst_result.get("composite_stars"),
         "synthesis": analyst_result.get("synthesis", {}),

@@ -152,7 +152,26 @@ def collect(ticker: str) -> dict:
         "shares_outstanding": _safe_get(info, "sharesOutstanding"),
         "dividend_yield": _safe_get(info, "dividendYield"),
         "payout_ratio": _safe_get(info, "payoutRatio"),
+        "ebitda": _safe_get(info, "ebitda"),
+        "interest_expense": None,
+        "effective_tax_rate": None,
     }
+
+    # Fetch interest expense and tax rate from income statement
+    try:
+        inc = stock.income_stmt
+        if inc is not None and not inc.empty:
+            latest = inc.iloc[:, 0]
+            if "Interest Expense" in latest.index:
+                val = latest["Interest Expense"]
+                if val is not None:
+                    fundamentals["interest_expense"] = abs(float(val))
+            pretax = latest.get("Pretax Income")
+            tax = latest.get("Tax Provision")
+            if pretax and tax and pretax > 0:
+                fundamentals["effective_tax_rate"] = round(float(tax) / float(pretax), 4)
+    except Exception:
+        pass
 
     # --- Historical data (1y daily for technical, 5y quarterly for growth) ---
     hist_1y = stock.history(period="1y")

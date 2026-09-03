@@ -19,6 +19,7 @@ class QuickScoreRequest(BaseModel):
 
 class CompareRequest(BaseModel):
     tickers: list[str]
+    auto_peers: bool = False
 
 
 @router.post("/analyze")
@@ -72,12 +73,14 @@ def run_comparison(req: CompareRequest):
     try:
         from app.agents.comparator import compare
 
-        if len(req.tickers) < 2:
-            raise HTTPException(status_code=400, detail="Cần ít nhất 2 mã để so sánh")
+        if len(req.tickers) < 1:
+            raise HTTPException(status_code=400, detail="Cần ít nhất 1 mã")
+        if not req.auto_peers and len(req.tickers) < 2:
+            raise HTTPException(status_code=400, detail="Cần ít nhất 2 mã để so sánh, hoặc bật auto_peers")
         if len(req.tickers) > 5:
             raise HTTPException(status_code=400, detail="Tối đa 5 mã")
 
-        result = compare(req.tickers)
+        result = compare(req.tickers, auto_peers=req.auto_peers)
         if "error" in result:
             raise HTTPException(status_code=404, detail=result["error"])
         return {"status": "success", "data": result}
