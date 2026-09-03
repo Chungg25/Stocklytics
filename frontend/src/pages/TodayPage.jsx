@@ -204,7 +204,7 @@ const TodayPage = () => {
       {!loading && totalEntries > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
           <div>
-            Showing <strong className="text-white">{startIndex + 1}</strong> to <strong className="text-white">{endIndex}</strong> of <strong className="text-white">{totalEntries}</strong> entries
+            Showing <strong className="text-white">{startIndex + 1}</strong> to <strong className="text-white">{endIndex}</strong>
           </div>
           <div className="flex items-center gap-2">
             <button 
