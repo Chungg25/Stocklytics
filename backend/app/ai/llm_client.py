@@ -30,7 +30,7 @@ def get_groq_client():
         return OpenAI(base_url="https://api.groq.com/openai/v1", api_key=key2), 2
     return None, 0
 
-ORCA_MODEL = "deepseek/deepseek-v4-flash:free"
+ORCA_MODEL = "deepseek/deepseek-v4-flash-free"
 GROQ_MODEL = "qwen/qwen3.6-27b"
 
 def switch_key():
