@@ -331,19 +331,41 @@ def _ai_synthesize(tickers: list, rankings: dict, anomalies: list,
     anomalies_text = "\n".join(f"- {a}" for a in anomalies) if anomalies else "None detected"
 
     company_info = ""
+    ticker_details = ""
     for r in results:
         c = r.get("raw_data", {}).get("company", {})
         p = r.get("raw_data", {}).get("price", {})
-        company_info += f"\n{r['ticker']}: {c.get('name', '')} | ${p.get('current', 'N/A')} | Sector: {c.get('sector', '')} | Industry: {c.get('industry', '')}"
+        f = r.get("raw_data", {}).get("fundamentals", {})
+        calc = r.get("calc_result", {})
+        dcf = calc.get("dcf", {})
+        tech = calc.get("technical", {})
+        sc = r.get("score_result", {})
+        price = p.get("current", 0)
+        fair = dcf.get("fair_value")
 
-    # Historical performance context
+        company_info += f"\n{r['ticker']}: {c.get('name', '')} | ${price} | Sector: {c.get('sector', '')} | Industry: {c.get('industry', '')}"
+
+        ticker_details += f"\n\n--- {r['ticker']} ---"
+        ticker_details += f"\nPrice: ${price} | P/E: {calc.get('multiples', {}).get('pe_trailing', 'N/A')} | Rev Growth: {round((f.get('revenue_growth') or 0)*100, 1)}%"
+        ticker_details += f"\nROE: {round((f.get('roe') or 0)*100, 1)}% | Profit Margin: {round((f.get('profit_margin') or 0)*100, 1)}%"
+        ticker_details += f"\nDCF Fair Value: ${round(fair) if fair else 'N/A'} | DCF Upside: {round((fair-price)/price*100, 1) if fair and price else 'N/A'}%"
+        ticker_details += f"\nPiotroski: {calc.get('quality', {}).get('piotroski', {}).get('score', 'N/A')}/9 | Altman Z: {round(calc.get('quality', {}).get('altman_z', {}).get('z_score', 0), 2) if calc.get('quality', {}).get('altman_z') else 'N/A'}"
+        ticker_details += f"\nRSI: {round(tech.get('rsi', 0), 1)} | Beta: {p.get('beta', 'N/A')} | Trend: {tech.get('trend', 'N/A')}"
+        ticker_details += f"\nAI Score: {sc.get('total_score', 'N/A')}/100 | Rating: {sc.get('rating', 'N/A')}"
+
+        support = tech.get("support")
+        resistance = tech.get("resistance")
+        if support:
+            ticker_details += f"\nSupport: ${round(support, 2)}"
+        if resistance:
+            ticker_details += f"\nResistance: ${round(resistance, 2)}"
+
     hist_text = ""
     if historical:
         hist_text = "\nHISTORICAL PERFORMANCE (1Y):\n"
         for t, h in historical.items():
             hist_text += f"  {t}: Return {h.get('total_return_pct', 'N/A')}%, Max Drawdown {h.get('max_drawdown_pct', 'N/A')}%, Vol {h.get('annualized_volatility_pct', 'N/A')}%\n"
 
-    # Correlation context
     corr_text = ""
     if correlation:
         corr_text = "\nCORRELATION MATRIX:\n"
@@ -352,47 +374,70 @@ def _ai_synthesize(tickers: list, rankings: dict, anomalies: list,
             pairs = ", ".join(f"{t2}={correlation[t1].get(t2, 'N/A')}" for t2 in tks if t2 != t1)
             corr_text += f"  {t1}: {pairs}\n"
 
+    ticker_list_str = ", ".join(tickers)
+
     try:
         response = execute_with_fallback(
             messages=[
-                {"role": "system", "content": """You are a stock comparison analyst. You receive pre-calculated rankings, anomalies, historical performance, and correlation data. Your job is to:
-1. Pick the "best for" each purpose (growth, value, risk_reward, diversification). State the winner and a one-sentence reason.
-2. For EACH purpose, also provide a very brief (1 sentence) assessment/ranking for ALL OTHER stocks in the group.
-3. Declare an overall winner.
-4. Write a concise 2-3 sentence summary highlighting the key tension between these stocks.
+                {"role": "system", "content": f"""You are an investment decision analyst. You receive detailed data for {len(tickers)} stocks. Your job is to produce actionable investment decisions, NOT generic commentary.
+
+RULES:
+- Use SPECIFIC numbers from the data (P/E, growth %, DCF upside, RSI, etc.)
+- Every verdict must include concrete entry_price, stop_loss, target_price based on technical support/resistance and DCF
+- Portfolio allocation must sum to 100%
+- Compare stocks HEAD-TO-HEAD with specific metric differences
+- conviction: "high" (strong data alignment), "medium" (mixed signals), "low" (conflicting data)
 
 Respond ONLY in valid JSON:
-{
-  "best_for": {
-    "growth": {
+{{
+  "executive_summary": "<2-3 sentences: the KEY investment insight with specific numbers. What should the investor DO?>",
+  "ticker_verdicts": {{
+    "<TICKER>": {{
+      "action": "BUY|HOLD|SELL",
+      "conviction": "high|medium|low",
+      "one_liner": "<1 sentence with specific numbers: why this action>",
+      "entry_price": <number>,
+      "stop_loss": <number>,
+      "target_price": <number>,
+      "key_risk": "<1 sentence: the biggest specific risk>"
+    }}
+  }},
+  "portfolio_allocation": {{
+    "<TICKER>": <percent as integer>
+  }},
+  "allocation_rationale": "<1-2 sentences explaining the weighting with numbers>",
+  "best_for": {{
+    "growth": {{
       "ticker": "X",
-      "reason": "...",
-      "all_assessments": [
-        {"ticker": "X", "analysis": "..."},
-        {"ticker": "Y", "analysis": "..."}
-      ]
-    },
-    "value": {
+      "reason": "<with specific numbers>",
+      "all_assessments": [{{"ticker": "X", "analysis": "..."}}, ...]
+    }},
+    "value": {{
       "ticker": "X",
-      "reason": "...",
-      "all_assessments": [{"ticker": "X", "analysis": "..."}, {"ticker": "Y", "analysis": "..."}]
-    },
-    "risk_reward": {
+      "reason": "<with specific numbers>",
+      "all_assessments": [{{"ticker": "X", "analysis": "..."}}, ...]
+    }},
+    "risk_reward": {{
       "ticker": "X",
-      "reason": "...",
-      "all_assessments": [{"ticker": "X", "analysis": "..."}, {"ticker": "Y", "analysis": "..."}]
-    },
-    "diversification": {
+      "reason": "<with specific numbers>",
+      "all_assessments": [{{"ticker": "X", "analysis": "..."}}, ...]
+    }},
+    "diversification": {{
       "ticker": "X",
-      "reason": "...",
-      "all_assessments": [{"ticker": "X", "analysis": "..."}, {"ticker": "Y", "analysis": "..."}]
-    }
-  },
-  "winner": {"ticker": "X", "score": <number>},
-  "summary": "<2-3 sentences>"
-}"""},
+      "reason": "<with specific numbers>",
+      "all_assessments": [{{"ticker": "X", "analysis": "..."}}, ...]
+    }}
+  }},
+  "winner": {{"ticker": "X", "score": <number>}}
+}}
+
+All tickers to include: {ticker_list_str}
+Each ticker MUST appear in ticker_verdicts and portfolio_allocation."""},
                 {"role": "user", "content": f"""Compare these stocks:
 {company_info}
+
+DETAILED METRICS:
+{ticker_details}
 
 {rankings_text}
 
@@ -410,7 +455,10 @@ ANOMALIES:
         return {
             "best_for": {},
             "winner": winner,
-            "summary": f"Comparison synthesis unavailable: {str(e)}",
+            "executive_summary": f"Comparison synthesis unavailable: {str(e)}",
+            "ticker_verdicts": {},
+            "portfolio_allocation": {},
+            "allocation_rationale": "",
             "error": str(e),
         }
 
@@ -523,7 +571,10 @@ def compare(tickers: list[str], auto_peers: bool = False) -> dict:
         "chart_data": chart_data,
         "best_for": ai_verdict.get("best_for", {}),
         "winner": rankings["overall"][0] if rankings.get("overall") else ai_verdict.get("winner", {}),
-        "summary": ai_verdict.get("summary", ""),
+        "summary": ai_verdict.get("executive_summary", ai_verdict.get("summary", "")),
+        "ticker_verdicts": ai_verdict.get("ticker_verdicts", {}),
+        "portfolio_allocation": ai_verdict.get("portfolio_allocation", {}),
+        "allocation_rationale": ai_verdict.get("allocation_rationale", ""),
         "errors": errors if errors else None,
     }
     
