@@ -85,7 +85,7 @@ export default function PortfolioPage() {
       if (error) throw error;
       fetchData();
     } catch (err) {
-      alert("Lỗi cấp vốn: " + err.message);
+      alert("Funding error: " + err.message);
     }
   };
 
@@ -101,7 +101,7 @@ export default function PortfolioPage() {
       setNewTicker("");
       fetchData();
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      alert("Error: " + err.message);
     }
   };
 
@@ -115,7 +115,7 @@ export default function PortfolioPage() {
   };
 
   const executeTrade = async () => {
-    if (tradeQuantity <= 0) return alert("Số lượng phải > 0");
+    if (tradeQuantity <= 0) return alert("Quantity must be > 0");
     setIsTrading(true);
     try {
       const res = await fetch(`${API_URL}/api/trading/execute`, {
@@ -136,14 +136,14 @@ export default function PortfolioPage() {
         alert(data.message);
       }
     } catch (err) {
-      alert("Lỗi giao dịch: " + err.message);
+      alert("Trade error: " + err.message);
     } finally {
       setIsTrading(false);
     }
   };
 
   const openTradeModal = (ticker, type) => {
-    if (!portfolio) return alert("Vui lòng cấp vốn trước khi giao dịch.");
+    if (!portfolio) return alert("Please fund your account before trading.");
     setTradeTarget(ticker);
     setTradeType(type);
     setTradeQuantity(1);
@@ -158,7 +158,7 @@ export default function PortfolioPage() {
     return acc;
   }, {});
 
-  if (loading) return <div className="p-8 text-center text-text-secondary">Đang tải dữ liệu Quỹ...</div>;
+  if (loading) return <div className="p-8 text-center text-text-secondary">Loading Portfolio Data...</div>;
 
   return (
     <div className="flex-1 overflow-auto bg-dark-bg p-6 relative">
@@ -174,7 +174,7 @@ export default function PortfolioPage() {
               onClick={initPortfolio}
               className="px-4 py-2 bg-stock-green text-dark-bg rounded font-bold hover:opacity-90 transition-opacity"
             >
-              Cấp Vốn 100,000 USD
+              Fund $100,000
             </button>
           )}
         </div>
@@ -182,13 +182,13 @@ export default function PortfolioPage() {
         {portfolio && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-dark-card border border-dark-border rounded-lg p-5">
-              <div className="text-text-secondary text-sm mb-1">Tiền Mặt (Cash Balance)</div>
+              <div className="text-text-secondary text-sm mb-1">Cash Balance</div>
               <div className="text-3xl font-bold text-white">
                 ${Number(portfolio.cash_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
             <div className="bg-dark-card border border-dark-border rounded-lg p-5">
-              <div className="text-text-secondary text-sm mb-1">Tổng Tài Sản (Total Equity)</div>
+              <div className="text-text-secondary text-sm mb-1">Total Equity</div>
               <div className="text-3xl font-bold text-stock-green flex items-center gap-2">
                 ${Number(portfolio.total_equity).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 <TrendingUp size={20} />
@@ -205,20 +205,20 @@ export default function PortfolioPage() {
             {/* Positions */}
             <div className="bg-dark-card border border-dark-border rounded-lg p-5">
               <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                <DollarSign size={18} className="text-stock-green" /> Danh Mục Đầu Tư (Positions)
+                <DollarSign size={18} className="text-stock-green" /> Positions
               </h2>
               {!portfolio || positions.length === 0 ? (
-                <div className="text-text-secondary text-sm italic">Chưa có cổ phiếu nào.</div>
+                <div className="text-text-secondary text-sm italic">No positions yet.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="text-text-secondary text-sm border-b border-dark-border">
-                        <th className="pb-2">Mã</th>
-                        <th className="pb-2">Số lượng</th>
-                        <th className="pb-2">Giá TB</th>
-                        <th className="pb-2">Lãi/Lỗ</th>
-                        <th className="pb-2 text-right">Hành động</th>
+                        <th className="pb-2">Ticker</th>
+                        <th className="pb-2">Quantity</th>
+                        <th className="pb-2">Avg Price</th>
+                        <th className="pb-2">P/L</th>
+                        <th className="pb-2 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="text-sm">
@@ -231,8 +231,8 @@ export default function PortfolioPage() {
                             {p.unrealized_pnl >= 0 ? '+' : ''}${p.unrealized_pnl}
                           </td>
                           <td className="py-3 text-right space-x-2">
-                            <button onClick={() => openTradeModal(p.ticker, 'BUY')} className="text-xs px-2 py-1 bg-stock-green/20 text-stock-green rounded hover:bg-stock-green hover:text-dark-bg">Thêm</button>
-                            <button onClick={() => openTradeModal(p.ticker, 'SELL')} className="text-xs px-2 py-1 bg-stock-red/20 text-stock-red rounded hover:bg-stock-red hover:text-white">Bán</button>
+                            <button onClick={() => openTradeModal(p.ticker, 'BUY')} className="text-xs px-2 py-1 bg-stock-green/20 text-stock-green rounded hover:bg-stock-green hover:text-dark-bg">Buy More</button>
+                            <button onClick={() => openTradeModal(p.ticker, 'SELL')} className="text-xs px-2 py-1 bg-stock-red/20 text-stock-red rounded hover:bg-stock-red hover:text-white">Sell</button>
                           </td>
                         </tr>
                       ))}
@@ -245,10 +245,10 @@ export default function PortfolioPage() {
             {/* Trade Ledger */}
             <div className="bg-dark-card border border-dark-border rounded-lg p-5">
               <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                <History size={18} className="text-orange-400" /> Lịch Sử Khớp Lệnh
+                <History size={18} className="text-orange-400" /> Trade Ledger
               </h2>
               {trades.length === 0 ? (
-                <div className="text-text-secondary text-sm italic">Chưa có giao dịch nào.</div>
+                <div className="text-text-secondary text-sm italic">No trades yet.</div>
               ) : (
                 <div className="space-y-3">
                   {trades.map(t => (
@@ -272,10 +272,10 @@ export default function PortfolioPage() {
             {/* AI Decisions */}
             <div className="bg-dark-card border border-dark-border rounded-lg p-5">
               <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                <Cpu size={18} className="text-purple-400" /> Cố Vấn Đầu Tư AI (TradingAgents)
+                <Cpu size={18} className="text-purple-400" /> Trading Agents AI
               </h2>
               {decisions.length === 0 ? (
-                <div className="text-text-secondary text-sm italic">AI chưa có lời khuyên nào.</div>
+                <div className="text-text-secondary text-sm italic">No AI recommendations yet.</div>
               ) : (
                 <div className="space-y-3">
                   {decisions.map(d => (
@@ -300,27 +300,27 @@ export default function PortfolioPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-sm overflow-hidden shadow-2xl">
             <div className="flex justify-between items-center p-4 border-b border-dark-border bg-dark-bg">
-              <h3 className="font-bold text-white">Giao Dịch {tradeTarget}</h3>
+              <h3 className="font-bold text-white">Trade {tradeTarget}</h3>
               <button onClick={() => setIsTradeModalOpen(false)} className="text-text-muted hover:text-white">
                 <X size={18} />
               </button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-sm text-text-secondary mb-1">Loại Lệnh</label>
+                <label className="block text-sm text-text-secondary mb-1">Order Type</label>
                 <div className="flex gap-2">
                   <button 
                     onClick={() => setTradeType('BUY')}
                     className={`flex-1 py-2 text-sm font-bold rounded-lg border transition-colors ${tradeType === 'BUY' ? 'bg-stock-green/20 border-stock-green text-stock-green' : 'bg-dark-bg border-dark-border text-text-muted'}`}
-                  >Mua (Buy)</button>
+                  >Buy</button>
                   <button 
                     onClick={() => setTradeType('SELL')}
                     className={`flex-1 py-2 text-sm font-bold rounded-lg border transition-colors ${tradeType === 'SELL' ? 'bg-stock-red/20 border-stock-red text-stock-red' : 'bg-dark-bg border-dark-border text-text-muted'}`}
-                  >Bán (Sell)</button>
+                  >Sell</button>
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-text-secondary mb-1">Số Lượng Cổ Phiếu</label>
+                <label className="block text-sm text-text-secondary mb-1">Quantity</label>
                 <input 
                   type="number" 
                   min="1"
@@ -336,7 +336,7 @@ export default function PortfolioPage() {
                   tradeType === 'BUY' ? 'bg-stock-green hover:bg-stock-green/90' : 'bg-stock-red hover:bg-stock-red/90'
                 } ${isTrading ? 'opacity-50' : ''}`}
               >
-                {isTrading ? <Loader2 className="animate-spin" size={18} /> : (tradeType === 'BUY' ? 'Khớp Lệnh MUA' : 'Khớp Lệnh BÁN')}
+                {isTrading ? <Loader2 className="animate-spin" size={18} /> : (tradeType === 'BUY' ? 'Execute BUY' : 'Execute SELL')}
               </button>
             </div>
           </div>

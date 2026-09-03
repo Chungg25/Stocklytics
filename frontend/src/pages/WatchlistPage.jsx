@@ -57,7 +57,7 @@ export default function WatchlistPage() {
 
     // Client-side validation for duplicates
     if (watchlist.some(w => w.ticker === tickerName)) {
-      alert(`Mã cổ phiếu ${tickerName} đã có trong Watchlist của bạn!`);
+      alert(`Ticker ${tickerName} is already in your Watchlist!`);
       return;
     }
 
@@ -69,14 +69,14 @@ export default function WatchlistPage() {
       });
       
       if (error) {
-        if (error.code === '23505') throw new Error("Mã cổ phiếu này đã tồn tại trong Watchlist!");
+        if (error.code === '23505') throw new Error("This ticker already exists in your Watchlist!");
         throw error;
       }
       
       setNewTicker("");
       fetchData();
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      alert("Error: " + err.message);
     }
   };
 

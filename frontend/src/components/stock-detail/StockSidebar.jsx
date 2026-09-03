@@ -37,7 +37,7 @@ export default function StockSidebar({ ticker, stockInfo }) {
     <div className="flex flex-col h-full bg-dark-card rounded-xl border border-dark-border overflow-hidden shadow-lg">
       <div className="flex border-b border-dark-border">
         <div className="flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 text-primary border-b-2 border-primary bg-primary/10">
-          <Newspaper size={16} /> Tin tức
+          <Newspaper size={16} /> News
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export default function StockSidebar({ ticker, stockInfo }) {
               </div>
             ))
           ) : (
-            <p className="text-text-muted text-sm text-center py-8">Chưa có tin tức mới cho cổ phiếu này.</p>
+            <p className="text-text-muted text-sm text-center py-8">No recent news for this stock.</p>
           )}
         </div>
       </div>

@@ -149,7 +149,7 @@ const TodayPage = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Lỗi khi tải dữ liệu:", err);
+        console.error("Error loading data:", err);
         setLoading(false);
       });
   }, []);
@@ -203,11 +203,11 @@ const TodayPage = () => {
         setStocks(prev => [data.data, ...prev]);
         setSearchQuery("");
       } else {
-        alert("Không tìm thấy mã cổ phiếu: " + query);
+        alert("Ticker not found: " + query);
       }
     } catch (err) {
       console.error(err);
-      alert("Lỗi kết nối khi tìm kiếm.");
+      alert("Connection error during search.");
     } finally {
       setIsSearching(false);
     }

@@ -142,20 +142,20 @@ export default function GlobalAgentPanel() {
               Alphahubiq Copilot
             </h3>
             <p className="text-[10px] text-stock-green uppercase font-bold tracking-wider mt-0.5">
-              {currentTicker ? `LÀM VIỆC VỚI ${currentTicker}` : 'TRỢ LÝ TOÀN CẦU'}
+              {currentTicker ? `WORKING WITH ${currentTicker}` : 'GLOBAL ASSISTANT'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
           {messages.length > 0 && (
-            <button onClick={clearMessages} className="text-text-muted hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-white/5" title="Xóa lịch sử chat">
+            <button onClick={clearMessages} className="text-text-muted hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-white/5" title="Clear chat history">
               <Trash2 size={16} />
             </button>
           )}
-          <button onClick={() => setIsExpanded(!isExpanded)} className="text-text-muted hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" title={isExpanded ? "Thu nhỏ" : "Phóng to"}>
+          <button onClick={() => setIsExpanded(!isExpanded)} className="text-text-muted hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" title={isExpanded ? "Collapse" : "Expand"}>
             {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
-          <button onClick={toggleAgent} className="text-text-muted hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" title="Đóng">
+          <button onClick={toggleAgent} className="text-text-muted hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" title="Close">
             <X size={18} />
           </button>
         </div>
@@ -171,14 +171,14 @@ export default function GlobalAgentPanel() {
                 <Bot size={40} className="text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
               </div>
             </div>
-            <h3 className="text-xl text-white font-bold mb-2 tracking-tight">Tôi có thể giúp gì cho bạn?</h3>
-            <p className="text-text-muted text-sm px-6 max-w-xs leading-relaxed">Ra lệnh điều hướng web, hỏi thông tin tài chính, hoặc phân tích kỹ thuật ngay tại đây.</p>
+            <h3 className="text-xl text-white font-bold mb-2 tracking-tight">How can I help you?</h3>
+            <p className="text-text-muted text-sm px-6 max-w-xs leading-relaxed">Ask me to navigate the app, pull financial data, or perform technical analysis right here.</p>
             
             <div className="mt-8 space-y-3 w-full max-w-[90%]">
               {[
-                `Mở trang danh mục đầu tư`, 
-                `Phân tích mã NVDA`, 
-                `Thị trường hôm nay thế nào?`
+                `Open portfolio`, 
+                `Analyze NVDA`, 
+                `How is the market today?`
               ].map((suggestion, i) => (
                 <button
                   key={i}
@@ -222,7 +222,7 @@ export default function GlobalAgentPanel() {
             </div>
             <div className="p-4 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent text-text-secondary rounded-tl-sm flex items-center gap-3 border border-white/5 shadow-sm">
               <Loader2 size={16} className="animate-spin text-primary" /> 
-              <span className="text-sm font-medium animate-pulse">Đang suy nghĩ...</span>
+              <span className="text-sm font-medium animate-pulse">Thinking...</span>
             </div>
           </div>
         )}
@@ -237,7 +237,7 @@ export default function GlobalAgentPanel() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Hỏi tôi bất cứ điều gì..."
+            placeholder="Ask me anything..."
             className="flex-1 bg-transparent px-4 py-2.5 text-white text-[15px] focus:outline-none placeholder-text-muted"
           />
           <button

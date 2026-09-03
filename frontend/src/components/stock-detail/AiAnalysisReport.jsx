@@ -26,8 +26,8 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
   };
 
   const tabs = [
-    { id: 'synthesis', label: 'Tổng kết (Synthesis)', icon: <BrainCircuit size={16} /> },
-    { id: 'full_report', label: 'Báo cáo chi tiết', icon: <Info size={16} /> },
+    { id: 'synthesis', label: 'Synthesis', icon: <BrainCircuit size={16} /> },
+    { id: 'full_report', label: 'Full Report', icon: <Info size={16} /> },
     { id: 'duan', label: 'Duan Yongping', icon: <Target size={16} /> },
     { id: 'buffett', label: 'Warren Buffett', icon: <ShieldCheck size={16} /> },
     { id: 'munger', label: 'Charlie Munger', icon: <Scale size={16} /> },
@@ -56,7 +56,7 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
                 4 Masters AI Analysis
                 <span className="px-2.5 py-0.5 rounded-full bg-dark-border text-xs text-text-muted font-medium uppercase tracking-wider">BETA</span>
               </h2>
-              <p className="text-sm text-text-secondary mt-0.5">Phân tích đa chiều dựa trên triết lý của 4 huyền thoại đầu tư.</p>
+              <p className="text-sm text-text-secondary mt-0.5">Multi-dimensional analysis based on 4 legendary investors.</p>
             </div>
           </div>
           <button 
@@ -113,18 +113,18 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
               <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20">
                   <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="text-primary" /> Kết luận cuối cùng
+                    <CheckCircle2 className="text-primary" /> Final Conclusion
                   </h3>
                   <div className="prose prose-invert prose-p:text-text-secondary max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {synthesis.summary || "Đang tổng hợp..."}
+                      {synthesis.summary || "Summarizing..."}
                     </ReactMarkdown>
                   </div>
                 </div>
 
                 {synthesis.key_catalysts && (
                   <div className="p-6 rounded-2xl bg-dark-card border border-dark-border">
-                    <h3 className="text-lg font-bold text-white mb-4">Các yếu tố xúc tác (Catalysts)</h3>
+                    <h3 className="text-lg font-bold text-white mb-4">Catalysts</h3>
                     <ul className="space-y-3">
                       {synthesis.key_catalysts.map((cat, idx) => (
                         <li key={idx} className="flex items-start gap-3 text-text-secondary text-sm">
@@ -144,7 +144,7 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
                 <div className="p-8 rounded-2xl bg-dark-card border border-dark-border">
                   <div className="prose prose-invert prose-p:text-text-secondary prose-h2:text-primary prose-h3:text-white max-w-none text-sm leading-relaxed">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {full_report_markdown || "Báo cáo chi tiết đang được tạo..."}
+                      {full_report_markdown || "Generating detailed report..."}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
                 </div>
 
                 <div className="p-6 rounded-2xl bg-dark-hover border border-dark-border">
-                  <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-3">Lập luận phân tích</h4>
+                  <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-3">Analysis Rationale</h4>
                   <div className="prose prose-invert prose-p:text-text-secondary max-w-none text-sm leading-relaxed">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {perspectives[activeTab].full_data?.analysis || perspectives[activeTab].verdict || ""}
@@ -188,7 +188,7 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
                 {perspectives[activeTab].full_data?.failure_scenarios && (
                   <div className="p-6 rounded-2xl bg-stock-red/10 border border-stock-red/20">
                     <h4 className="text-sm font-bold text-stock-red uppercase tracking-wider mb-4 flex items-center gap-2">
-                      <AlertTriangle size={16} /> Kịch bản rủi ro (Failure Scenarios)
+                      <AlertTriangle size={16} /> Failure Scenarios
                     </h4>
                     <div className="space-y-4">
                       {perspectives[activeTab].full_data.failure_scenarios.map((scen, idx) => (

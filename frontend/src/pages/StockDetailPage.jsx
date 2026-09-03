@@ -58,11 +58,11 @@ export default function StockDetailPage() {
         setAnalysisData(data.data);
         setShowReport(true);
       } else {
-        alert("Lỗi phân tích: " + (data.detail || data.message));
+        alert("Analysis error: " + (data.detail || data.message));
       }
     } catch (err) {
       console.error(err);
-      alert("Đã xảy ra lỗi khi gọi AI Analysis.");
+      alert("An error occurred during AI Analysis.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -106,11 +106,11 @@ export default function StockDetailPage() {
                   }`}
                 >
                   {isAnalyzing ? (
-                    <><Loader2 size={16} className="animate-spin" /> Đang phân tích...</>
+                    <><Loader2 size={16} className="animate-spin" /> Analyzing...</>
                   ) : analysisData ? (
-                    <><BrainCircuit size={16} /> Xem báo cáo AI</>
+                    <><BrainCircuit size={16} /> View AI Report</>
                   ) : (
-                    <><BrainCircuit size={16} /> AI Phân tích (4 Masters)</>
+                    <><BrainCircuit size={16} /> AI Analysis (4 Masters)</>
                   )}
                 </button>
               </div>

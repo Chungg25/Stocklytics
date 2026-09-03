@@ -153,7 +153,7 @@ const TradingViewPage = () => {
             <input 
               type="text" 
               className="w-full bg-dark-card border border-dark-border text-white text-sm rounded-lg focus:ring-stock-green focus:border-stock-green block pl-10 p-2.5 shadow-inner" 
-              placeholder="Gõ lệnh AI (VD: Phân tích MSFT với MACD và RSI...)" 
+              placeholder="Ask AI (e.g., Analyze MSFT with MACD and RSI...)"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handlePromptSubmit}
@@ -180,7 +180,7 @@ const TradingViewPage = () => {
         {/* AI Assessment Actions */}
         <div className="bg-dark-card border border-dark-border rounded-xl p-4 mb-6 shadow-lg">
           <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
-            Đánh giá AI cho cổ phiếu {symbol}
+            AI Rating for {symbol}
           </h2>
           <div className="flex flex-wrap gap-4">
             <button 
@@ -188,7 +188,7 @@ const TradingViewPage = () => {
               disabled={loadingAssessment}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${assessmentMode === 'team' ? 'bg-stock-green text-dark-bg shadow-lg' : 'bg-dark-bg text-text-primary hover:bg-stock-green hover:text-dark-bg border border-dark-border'}`}
             >
-              <Users size={18} /> Đánh giá
+              <Users size={18} /> Rating
             </button>
           </div>
           
@@ -198,7 +198,7 @@ const TradingViewPage = () => {
               {loadingAssessment && !assessmentResult && (
                 <div className="flex flex-col items-center justify-center py-8 space-y-4">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="text-text-secondary animate-pulse text-sm">AI đang tổng hợp dữ liệu (Web Search)...</p>
+                  <p className="text-text-secondary animate-pulse text-sm">AI is gathering data (Web Search)...</p>
                 </div>
               )}
               
