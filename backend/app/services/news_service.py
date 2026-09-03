@@ -1,21 +1,68 @@
 from app.ai.llm_client import get_orca_client, ORCA_MODEL
 
+import os
+import requests
+from datetime import datetime, timedelta
+from app.db import supabase
+
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+
 def fetch_stock_news(ticker: str) -> list:
-    """Fetch latest news for a stock using DuckDuckGo search."""
+    """Fetch latest news for a stock using Finnhub and cache in Supabase."""
     try:
-        from ddgs import DDGS
-        results = []
-        with DDGS() as ddgs:
-            for r in ddgs.news(f"{ticker} stock news", max_results=8):
+        # 1. Fetch from Finnhub if API key is present
+        if FINNHUB_API_KEY:
+            to_date = datetime.now().strftime("%Y-%m-%d")
+            from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+            url = f"https://finnhub.io/api/v1/company-news?symbol={ticker}&from={from_date}&to={to_date}&token={FINNHUB_API_KEY}"
+            
+            resp = requests.get(url)
+            if resp.status_code == 200:
+                articles = resp.json()
+                
+                # Insert top 20 into Supabase (upsert based on URL isn't natively supported in standard insert without RPC, 
+                # but we can try to insert and ignore errors, or just insert if they don't exist.
+                # Actually, standard supabase-py has upsert. Let's use upsert if we had primary keys setup correctly.
+                # Since 'url' is UNIQUE, we can try to insert one by one or filter. 
+                # To keep it simple and robust, we fetch current URLs from DB first.
+                
+                # We will limit to 10 to avoid huge payloads
+                articles = articles[:15]
+                
+                for article in articles:
+                    try:
+                        # Convert unix timestamp to ISO
+                        pub_date = datetime.fromtimestamp(article.get('datetime', 0)).isoformat()
+                        
+                        supabase.table('stock_news').insert({
+                            "ticker": ticker,
+                            "title": article.get("headline", ""),
+                            "url": article.get("url", ""),
+                            "source": article.get("source", ""),
+                            "summary": article.get("summary", ""),
+                            "published_at": pub_date
+                        }).execute()
+                    except Exception as e:
+                        # Likely unique constraint violation on url, ignore
+                        pass
+
+        # 2. Fetch from Supabase (Always fetch from DB to return to client)
+        res = supabase.table('stock_news').select('*').eq('ticker', ticker).order('published_at', desc=True).limit(10).execute()
+        
+        if res.data:
+            results = []
+            for r in res.data:
                 results.append({
                     "title": r.get("title", ""),
-                    "body": r.get("body", ""),
+                    "body": r.get("summary", ""),
                     "source": r.get("source", ""),
                     "url": r.get("url", ""),
-                    "date": r.get("date", ""),
-                    "image": r.get("image", "")
+                    "date": r.get("published_at", "")[:10],
+                    "image": "" # Finnhub has image, but we didn't add it to schema. We can ignore or add later.
                 })
-        return results
+            return results
+            
+        return []
     except Exception as e:
         print(f"News fetch failed: {e}")
         return []

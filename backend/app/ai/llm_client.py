@@ -31,7 +31,7 @@ def get_groq_client():
     return None, 0
 
 ORCA_MODEL = "deepseek/deepseek-v4-pro-free"
-GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_MODEL = "qwen/qwen3.6-27b"
 
 def switch_key():
     global ACTIVE_KEY_INDEX

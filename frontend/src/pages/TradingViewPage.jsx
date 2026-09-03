@@ -207,7 +207,8 @@ const TradingViewPage = () => {
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {assessmentResult
                       .replace(/\[ACTION:.*?\]/g, '')
-                      .replace(/<[^>]*tool_call(?:s)?>[\s\S]*?<\/[^>]*tool_call(?:s)?>/g, '')
+                      .replace(/<[^>]*tool_calls>[\s\S]*?<\/[^>]*tool_calls>/g, '')
+                      .replace(/<[^>]*tool_calls>[\s\S]*$/g, '')
                       .replace(/```(?:xml|bash|json)?\s*```/g, '')}
                   </ReactMarkdown>
                   {loadingAssessment && <span className="inline-block w-2 h-4 ml-1 bg-stock-green animate-pulse"></span>}

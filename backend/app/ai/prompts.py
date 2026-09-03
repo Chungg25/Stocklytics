@@ -30,6 +30,6 @@ def build_assessment_prompt(ticker: str, mode: str, context: str = "") -> str:
     if context:
         full_prompt = full_prompt.replace("$CONTEXT", context)
         
-    full_prompt += f"\n\n[FINAL SYSTEM DIRECTIVE]\n1. MẶC ĐỊNH sử dụng công cụ `TeamCreate` để tạo ra một đội 4 chuyên gia (Kinh doanh, Tài chính, Ngành, Rủi ro). Sau đó dùng `TaskCreate` để phân công họ phân tích các dữ liệu kỹ thuật và tin tức đã được cung cấp ở trên.\n2. Tùy ý sử dụng thêm `web_search_with_citations` nếu bạn cần đào sâu thêm thông tin. KHÔNG sử dụng các định dạng công cụ nội bộ (như XML hay Bash) mà hãy dùng chuẩn Tool Call của hệ thống."
+    full_prompt += f"\n\n[FINAL SYSTEM DIRECTIVE]\n1. You MUST write your ENTIRE response in ENGLISH, regardless of the user's prompt. Translate all your analysis, headers, and bullet points into ENGLISH. This is a strict requirement.\n2. IMPORTANT: You MUST use your own native web_search tool to find the absolute latest real-time financial data, news and events about this company to supplement your analysis. ALWAYS cite your sources as links at the end of your report."
     
     return full_prompt

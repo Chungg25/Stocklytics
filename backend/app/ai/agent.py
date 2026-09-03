@@ -110,56 +110,26 @@ class ChatAgent:
             import re
 
             # 2. Custom XML Parser for Hallucinated Tool Calls (DeepSeek DSML/XML compatibility)
-            if not tool_calls and ("<invoke" in final_content or "<WEBSEARCH" in final_content or "<tool_call" in final_content):
-                # Pattern 0: <tool_calls> JSON_ARRAY </tool_calls> or <tool_call> JSON_OBJECT </tool_call>
-                tc_pattern = r'<\s*tool_call(?:s)?\s*>([\s\S]*?)<\s*/\s*tool_call(?:s)?\s*>'
-                tcs = re.findall(tc_pattern, final_content)
-                for tc_body in tcs:
-                    try:
-                        tc_json = json.loads(tc_body.strip())
-                        if isinstance(tc_json, dict):
-                            tc_json = [tc_json]
-                        for call in tc_json:
-                            tool_calls.append({
-                                "id": f"call_xml_qwen_{len(tool_calls)}",
-                                "type": "function",
-                                "function": {
-                                    "name": call.get("name", ""),
-                                    "arguments": json.dumps(call.get("arguments", {})) if isinstance(call.get("arguments"), dict) else call.get("arguments", "")
-                                }
-                            })
-                    except json.JSONDecodeError:
-                        pass
-                
-                # Pattern 1: <invoke name="ToolName"> <parameter name="paramName">value</parameter> </invoke>
+            if not tool_calls and ("<invoke" in final_content or "<WEBSEARCH" in final_content):
+                # Pattern 1: <invoke name="web_search"> <parameter name="query">...</parameter> </invoke>
                 invoke_pattern = r'<\s*invoke\s+name=["\'](.*?)["\']\s*>([\s\S]*?)<\s*/\s*invoke\s*>'
                 invokes = re.findall(invoke_pattern, final_content)
                 for name, body in invokes:
-                    # Parse all parameters dynamically
-                    param_pattern = r'<\s*parameter\s+name=["\'](.*?)["\'][^>]*>([\s\S]*?)<\s*/\s*parameter\s*>'
-                    params = re.findall(param_pattern, body)
-                    args_dict = {}
-                    for p_name, p_val in params:
-                        val = p_val.strip()
-                        if (val.startswith('[') and val.endswith(']')) or (val.startswith('{') and val.endswith('}')):
-                            try:
-                                val = json.loads(val)
-                            except json.JSONDecodeError:
-                                pass
-                        args_dict[p_name] = val
-                    
-                    # Special mapping for legacy websearch
-                    if name in ["web_search", "search"]:
-                        name = "web_search_with_citations"
-                        
-                    tool_calls.append({
-                        "id": f"call_xml_{len(tool_calls)}",
-                        "type": "function",
-                        "function": {
-                            "name": name,
-                            "arguments": json.dumps(args_dict)
-                        }
-                    })
+                    if name in ["web_search", "web_search_with_citations", "search", "Bash"]:
+                        param_pattern = r'<\s*parameter\s+name=["\'](?:query|command)["\'][^>]*>([\s\S]*?)<\s*/\s*parameter\s*>'
+                        match = re.search(param_pattern, body)
+                        if match:
+                            query = match.group(1).strip()
+                            tool_calls.append({
+                                "id": f"call_xml_{len(tool_calls)}",
+                                "type": "function",
+                                "function": {
+                                    "name": "web_search_with_citations",
+                                    "arguments": json.dumps({"query": query})
+                                }
+                            })
+                            
+                # Pattern 2: <WEBSEARCH> <QUERY>...</QUERY> </WEBSEARCH>
                 websearch_pattern = r'<\s*WEBSEARCH\s*>[\s\S]*?<\s*QUERY\s*>([\s\S]*?)<\s*/\s*QUERY\s*>[\s\S]*?<\s*/\s*WEBSEARCH\s*>'
                 websearches = re.findall(websearch_pattern, final_content)
                 for query in websearches:
@@ -188,39 +158,17 @@ class ChatAgent:
 
             for tool_call in tool_calls:
                 func_name = tool_call["function"]["name"]
-                
-                # Yield intermediate thinking/processing status to UI BEFORE parsing arguments
-                if func_name == "TaskCreate":
-                    yield f"\n\n> 🧠 **Đang giao việc cho Đội chuyên gia (Multi-Agent Task)**...\n> *Quá trình này sẽ tốn 1-3 phút do các chuyên gia phải lần lượt phân tích. Vui lòng chờ...*\n\n"
-                elif func_name == "TeamCreate":
-                    yield f"\n\n> 👥 **Đang thành lập Đội chuyên gia...**\n\n"
-                elif func_name == "web_search_with_citations":
-                    yield f"\n\n> 🌐 **Đang tra cứu dữ liệu thời gian thực trên Internet...**\n\n"
-                else:
-                    yield f"\n\n> ⚙️ **Đang xử lý dữ liệu ({func_name})...**\n\n"
-                
                 try:
-                    import ast
-                    args_str = tool_call["function"]["arguments"]
-                    try:
-                        kwargs = json.loads(args_str)
-                    except json.JSONDecodeError:
-                        # Fallback for Qwen's malformed JSON (e.g., single quotes)
-                        kwargs = ast.literal_eval(args_str)
-                        if not isinstance(kwargs, dict):
-                            raise ValueError("Parsed arguments must be a dictionary")
-                            
+                    kwargs = json.loads(tool_call["function"]["arguments"])
                     logger.info(f"Agent calling tool: {func_name} with {kwargs}")
                     
                     # Execute the tool silently without yielding to the chat stream
+                    # The frontend will just show the "Analyzing..." bouncing dots.
                     result = execute_tool(func_name, **kwargs)
-                    
-                    yield f"> ✅ **Hoàn thành bước xử lý.**\n\n"
                     
                 except Exception as e:
                     logger.error(f"Error executing {func_name}: {e}")
                     result = {"error": str(e)}
-                    yield f"> ❌ **Lỗi gọi công cụ {func_name}:** {str(e)}\n\n"
 
                 # Truncate or Summarize tool results to prevent Groq Rate Limit (8000 TPM limit)
                 result_str = json.dumps(result, ensure_ascii=False)
