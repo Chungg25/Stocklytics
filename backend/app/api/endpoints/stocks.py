@@ -10,6 +10,14 @@ router = APIRouter()
 def get_stocks():
     return get_top_stocks()
 
+@router.get("/stocks/{ticker}")
+def get_single_stock(ticker: str):
+    from app.services.stock_service import get_stock_data
+    data = get_stock_data(ticker.upper())
+    if data:
+        return {"status": "success", "data": data}
+    return {"status": "error", "message": "Ticker not found"}
+
 @router.get("/benchmark")
 def get_benchmark(sector: str = Query("top25")):
     return get_benchmark_data(sector)

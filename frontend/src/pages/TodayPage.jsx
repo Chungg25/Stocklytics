@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown } from 'lucide-react';
+import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2 } from 'lucide-react';
 import StockTable from '../components/screener/StockTable';
 import PageLayout from '../components/layout/PageLayout';
 
@@ -23,6 +23,13 @@ const TodayPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSector, setSelectedSector] = useState("All Sectors");
   const [isSectorDropdownOpen, setIsSectorDropdownOpen] = useState(false);
+  
+  // Search & Pagination State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
+  
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -53,10 +60,62 @@ const TodayPage = () => {
     return ["All Sectors", ...Array.from(uniqueSectors).sort()];
   }, [stocks]);
 
-  const displayedStocks = useMemo(() => {
-    if (selectedSector === "All Sectors") return stocks;
-    return stocks.filter(s => s.sector === selectedSector);
-  }, [stocks, selectedSector]);
+  // Handle Dynamic Search
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    const query = searchQuery.trim().toUpperCase();
+    if (!query) return;
+
+    // Check if we already have it locally
+    const existsLocally = stocks.some(s => s.ticker === query || s.name.toUpperCase().includes(query));
+    if (existsLocally) {
+      setCurrentPage(1);
+      return;
+    }
+
+    // Not found locally -> fetch from backend
+    setIsSearching(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stocks/${query}`);
+      const data = await res.json();
+      if (data.status === 'success' && data.data) {
+        // Add to our list
+        setStocks(prev => [data.data, ...prev]);
+        setSearchQuery("");
+        setCurrentPage(1);
+      } else {
+        alert("Không tìm thấy mã cổ phiếu: " + query);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi kết nối khi tìm kiếm.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const filteredStocks = useMemo(() => {
+    let result = stocks;
+    if (selectedSector !== "All Sectors") {
+      result = result.filter(s => s.sector === selectedSector);
+    }
+    if (searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        s.ticker.toLowerCase().includes(query) || 
+        s.name.toLowerCase().includes(query)
+      );
+    }
+    return result;
+  }, [stocks, selectedSector, searchQuery]);
+
+  // Pagination Logic
+  const totalEntries = filteredStocks.length;
+  const totalPages = Math.ceil(totalEntries / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalEntries);
+  
+  const displayedStocks = filteredStocks.slice(startIndex, endIndex);
 
   return (
     <PageLayout>
@@ -69,9 +128,27 @@ const TodayPage = () => {
       </div>
 
       {/* Header Info */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Stock Screener</h1>
-        <p className="text-text-muted text-sm">Filter and analyze US stocks with our advanced screening tools.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Stock Screener</h1>
+          <p className="text-text-muted text-sm">Filter and analyze US stocks with our advanced screening tools.</p>
+        </div>
+        
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="relative w-full md:w-72">
+          {isSearching ? (
+            <Loader2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />
+          ) : (
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          )}
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search symbol (e.g. AAPL) and Enter..." 
+            className="w-full bg-dark-card border border-dark-border rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-primary transition-colors"
+          />
+        </form>
       </div>
 
       {/* Action Bar (Filters) */}
@@ -90,6 +167,7 @@ const TodayPage = () => {
                     onClick={() => {
                       setSelectedSector(sector);
                       setIsSectorDropdownOpen(false);
+                      setCurrentPage(1);
                     }}
                   >
                     {sector}
@@ -118,9 +196,37 @@ const TodayPage = () => {
       </div>
 
       {/* Data Table */}
-      <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden">
+      <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden mb-4">
         <StockTable stocks={displayedStocks} loading={loading} />
       </div>
+      
+      {/* Pagination Footer */}
+      {!loading && totalEntries > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
+          <div>
+            Showing <strong className="text-white">{startIndex + 1}</strong> to <strong className="text-white">{endIndex}</strong> of <strong className="text-white">{totalEntries}</strong> entries
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              className="px-3 py-1 rounded bg-dark-card border border-dark-border hover:bg-dark-hover hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <span className="px-3">
+              Page {currentPage} / {totalPages}
+            </span>
+            <button 
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              className="px-3 py-1 rounded bg-dark-card border border-dark-border hover:bg-dark-hover hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
     </PageLayout>
   );
