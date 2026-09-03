@@ -30,8 +30,14 @@ const ComparePage = () => {
   const [tickers, setTickers] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
+  const [timeframe, setTimeframe] = useState('3M');
   const [autoPeers, setAutoPeers] = useState(false);
 
+  // Basic Fast Chart State
+  const [basicData, setBasicData] = useState([]);
+  const [loadingBasic, setLoadingBasic] = useState(false);
+
+  // Deep AI Analysis State
   const [compareData, setCompareData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -59,6 +65,36 @@ const ComparePage = () => {
     };
     fetchGroups();
   }, []);
+
+  // Auto-fetch basic fast chart data when tickers or timeframe change
+  useEffect(() => {
+    const fetchBasicChart = async () => {
+      if (tickers.length === 0) {
+        setBasicData([]);
+        return;
+      }
+      setLoadingBasic(true);
+      setError(null);
+      try {
+        const response = await fetch(`${API_URL}/api/compare`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tickers, timeframe, indicators: [] })
+        });
+        const resData = await response.json();
+        if (resData.status === 'success') {
+          setBasicData(resData.data);
+        } else {
+          setError(resData.message);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoadingBasic(false);
+      }
+    };
+    fetchBasicChart();
+  }, [tickers, timeframe]);
 
   const handleRunComparison = async () => {
     if (tickers.length === 0) {
@@ -101,8 +137,8 @@ const ComparePage = () => {
   const handleAddTicker = (e) => {
     if (e.key === 'Enter' && inputValue.trim()) {
       const newTicker = inputValue.trim().toUpperCase();
-      if (tickers.length >= 5) {
-        setError("Maximum 5 tickers allowed for detailed comparison.");
+      if (tickers.length >= 50) {
+        setError("Maximum 50 tickers allowed for basic charting.");
         return;
       }
       if (!tickers.includes(newTicker)) {
@@ -175,19 +211,22 @@ const ComparePage = () => {
   };
 
   const formattedChartData = useMemo(() => {
-    if (!compareData || !compareData.chart_data) return [];
-    const merged = {};
-    Object.keys(compareData.chart_data).forEach(ticker => {
-      const arr = compareData.chart_data[ticker];
-      if (Array.isArray(arr)) {
-        arr.forEach(pt => {
-          if (!merged[pt.date]) merged[pt.date] = { date: pt.date };
-          merged[pt.date][ticker] = pt.value;
-        });
-      }
-    });
-    return Object.values(merged).sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [compareData]);
+    if (compareData && compareData.chart_data) {
+      // If AI comparison data is available, format it (though we now rely on basic chart)
+      const merged = {};
+      Object.keys(compareData.chart_data).forEach(ticker => {
+        const arr = compareData.chart_data[ticker];
+        if (Array.isArray(arr)) {
+          arr.forEach(pt => {
+            if (!merged[pt.date]) merged[pt.date] = { date: pt.date };
+            merged[pt.date][ticker] = pt.value;
+          });
+        }
+      });
+      return Object.values(merged).sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+    return basicData;
+  }, [compareData, basicData]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -249,10 +288,25 @@ const ComparePage = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleAddTicker}
-                placeholder={tickers.length >= 5 ? "Maximum 5 tickers reached" : tickers.length === 0 ? "Search tickers (e.g. NVDA)..." : "Add another ticker..."}
-                disabled={tickers.length >= 5}
-                className={`bg-transparent text-white outline-none flex-1 min-w-[150px] px-3 py-1.5 text-sm font-medium placeholder:text-slate-500 ${tickers.length >= 5 ? 'cursor-not-allowed opacity-50' : ''}`}
+                placeholder={tickers.length >= 50 ? "Maximum 50 tickers reached" : tickers.length === 0 ? "Search tickers (e.g. NVDA)..." : "Add another ticker..."}
+                disabled={tickers.length >= 50}
+                className={`bg-transparent text-white outline-none flex-1 min-w-[150px] px-3 py-1.5 text-sm font-medium placeholder:text-slate-500 ${tickers.length >= 50 ? 'cursor-not-allowed opacity-50' : ''}`}
               />
+            </div>
+
+            {/* Timeframe Buttons */}
+            <div className="flex items-center bg-[#0d1326] border border-[#1e293b] rounded-xl overflow-hidden shadow-inner h-[56px]">
+              {['1M', '3M', '6M', '1Y', '3Y', '5Y'].map(tf => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-4 h-full text-sm font-bold transition-colors border-r border-[#1e293b] last:border-0 ${
+                    timeframe === tf ? 'bg-primary text-white shadow-inner' : 'text-text-muted hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {tf}
+                </button>
+              ))}
             </div>
 
             {/* Actions (Auto-peers & Compare) */}
@@ -276,10 +330,11 @@ const ComparePage = () => {
               <button
                 onClick={handleRunComparison}
                 disabled={loading || (tickers.length === 0)}
-                className="flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold hover:from-primary-hover hover:to-purple-700 disabled:opacity-50 disabled:grayscale transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+                className="flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-8 h-[40px] rounded-lg text-sm font-bold hover:from-primary-hover hover:to-purple-700 disabled:opacity-50 disabled:grayscale transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+                title="Deep AI analysis (requires 2-5 tickers)"
               >
-                {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Zap size={16} className={tickers.length > 0 ? "animate-pulse" : ""} />}
-                {loading ? "Analyzing..." : "Compare"}
+                {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Zap size={16} className={tickers.length > 0 && tickers.length <= 5 ? "animate-pulse" : ""} />}
+                {loading ? "Analyzing..." : "Deep AI Compare"}
               </button>
             </div>
           </div>
@@ -352,6 +407,50 @@ const ComparePage = () => {
       {error && <div className="text-stock-red mb-6 p-4 border border-stock-red/20 bg-stock-red/10 rounded-lg font-medium flex items-center gap-2"><AlertTriangle size={18}/> {error}</div>}
       {successMsg && <div className="text-stock-green mb-6 p-4 border border-stock-green/20 bg-stock-green/10 rounded-lg font-medium flex items-center gap-2"><CheckCircle2 size={18}/> {successMsg}</div>}
 
+      {/* BASIC CHART RENDER */}
+      <div className="bg-dark-card border border-dark-border rounded-xl p-6 mb-6 shadow-lg relative min-h-[450px]">
+        {loadingBasic && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-dark-card/50 backdrop-blur-sm rounded-xl">
+            <div className="text-primary font-bold animate-pulse flex items-center gap-2"><div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div> Loading Chart Data...</div>
+          </div>
+        )}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <TrendingUp className="text-primary" size={20} /> Percentage Comparison Chart
+          </h2>
+          {tickers.length > 5 && !compareData && (
+            <div className="text-xs font-bold text-stock-red bg-stock-red/10 px-3 py-1 rounded-full border border-stock-red/20">
+              Note: Reduce to 5 tickers or less to run Deep AI Compare.
+            </div>
+          )}
+        </div>
+        <div className="h-[380px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={formattedChartData} margin={{ top: 10, right: 100, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+              <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} minTickGap={40} />
+              <YAxis stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} domain={['auto', 'auto']} tickFormatter={(v) => `${v}%`} />
+              <RechartsTooltip content={<CustomTooltip />} />
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px', fontWeight: 'bold' }} />
+              <ReferenceLine y={0} stroke="#6B7280" strokeDasharray="3 3" opacity={0.5} />
+              {tickers.map((t, idx) => (
+                <Line
+                  key={t}
+                  type="monotone"
+                  dataKey={compareData && compareData.chart_data ? t : `${t}_perf`}
+                  name={t}
+                  stroke={COLORS[idx % COLORS.length]}
+                  strokeWidth={2.5}
+                  dot={false}
+                  isAnimationActive={true}
+                  label={<LastPointLabel name={t} dataLength={formattedChartData.length} color={COLORS[idx % COLORS.length]} />}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* DASHBOARD RENDER */}
       {compareData && (
         <div className="space-y-6 animate-fade-in">
@@ -397,37 +496,7 @@ const ComparePage = () => {
             </div>
           </div>
 
-          {/* Chart Section */}
-          <div className="bg-dark-card border border-dark-border rounded-xl p-6 shadow-lg relative min-h-[450px]">
-            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <TrendingUp className="text-primary" size={20} /> Normalized Performance Comparison (Base 100)
-            </h2>
-            <div className="h-[380px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={formattedChartData} margin={{ top: 10, right: 100, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                  <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} minTickGap={40} />
-                  <YAxis stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} domain={['auto', 'auto']} />
-                  <RechartsTooltip content={<CustomTooltip />} />
-                  <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px', fontWeight: 'bold' }} />
-                  <ReferenceLine y={100} stroke="#6B7280" strokeDasharray="3 3" opacity={0.5} />
-                  {compareData.tickers.map((t, idx) => (
-                    <Line
-                      key={t}
-                      type="monotone"
-                      dataKey={t}
-                      name={t}
-                      stroke={COLORS[idx % COLORS.length]}
-                      strokeWidth={2.5}
-                      dot={false}
-                      isAnimationActive={true}
-                      label={<LastPointLabel name={t} dataLength={formattedChartData.length} color={COLORS[idx % COLORS.length]} />}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+
 
           {/* Comparison Matrix & Best For */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
