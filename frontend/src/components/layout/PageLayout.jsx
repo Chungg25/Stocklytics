@@ -9,7 +9,7 @@ const PageLayout = ({ children }) => {
       <Sidebar />
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <TopNav />
-        <main className="flex-1 ml-20 md:ml-24 p-6 overflow-x-hidden overflow-y-auto no-scrollbar relative">
+        <main className="flex-1 ml-20 md:ml-24 px-6 pb-6 pt-20 overflow-x-hidden overflow-y-auto no-scrollbar relative">
           {children}
         </main>
       </div>
