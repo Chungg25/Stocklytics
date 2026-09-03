@@ -226,90 +226,125 @@ const ComparePage = () => {
       </div>
 
       {/* Controls Area */}
-      <div className="bg-dark-card border border-dark-border rounded-xl p-5 mb-6 space-y-5 shadow-lg">
-        <div className="flex flex-col xl:flex-row justify-between gap-4">
-          <div className="flex-1 flex flex-wrap items-center gap-2 bg-dark-bg border border-dark-border rounded-lg p-2.5">
-            {tickers.map((t, idx) => (
-              <span key={t} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold shadow-sm"
-                style={{ backgroundColor: `${COLORS[idx % COLORS.length]}20`, color: COLORS[idx % COLORS.length], border: `1px solid ${COLORS[idx % COLORS.length]}50` }}>
-                {t}
-                <X size={14} className="cursor-pointer hover:text-white transition-colors" onClick={() => removeTicker(t)} />
-              </span>
-            ))}
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleAddTicker}
-              placeholder={tickers.length >= 5 ? "Maximum 5 tickers" : "Add ticker & press Enter..."}
-              disabled={tickers.length >= 5}
-              className={`bg-transparent text-white outline-none flex-1 min-w-[150px] px-2 text-sm font-medium ${tickers.length >= 5 ? 'cursor-not-allowed opacity-50' : ''}`}
-            />
-          </div>
+      <div className="bg-gradient-to-b from-dark-card to-dark-bg border border-dark-border rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none -mr-40 -mt-40"></div>
 
-          <div className="flex items-center gap-4 bg-dark-bg border border-dark-border rounded-lg px-4 py-2">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input 
-                type="checkbox" 
-                checked={autoPeers} 
-                onChange={(e) => setAutoPeers(e.target.checked)}
-                className="w-4 h-4 text-primary bg-dark-card border-dark-border rounded focus:ring-primary focus:ring-2"
-              />
-              <span className="text-sm font-semibold text-text-primary">Auto-find Peers</span>
-            </label>
-            <div className="w-px h-6 bg-dark-border"></div>
-            <button
-              onClick={handleRunComparison}
-              disabled={loading || (tickers.length === 0)}
-              className="flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-2 rounded-md text-sm font-bold hover:from-primary-hover hover:to-purple-700 disabled:opacity-50 transition-all shadow-md shadow-primary/20"
-            >
-              {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Zap size={16} />}
-              {loading ? "Analyzing..." : "Compare Now"}
-            </button>
-          </div>
-        </div>
-
-        {/* Groups */}
-        <div className="flex flex-col gap-4 pt-4 border-t border-dark-border">
-          <div className="flex flex-wrap gap-2 items-center">
-            <div className="text-text-secondary text-xs font-bold uppercase tracking-wider mr-2 flex items-center gap-1.5">
-              <Settings size={14} /> Presets
-            </div>
-            {Object.keys(groups).map(groupName => (
-              <button
-                key={groupName}
-                onClick={() => handleGroupChange(groupName)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${selectedGroup === groupName ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105' : 'bg-dark-bg border-dark-border text-text-secondary hover:border-primary hover:text-white'}`}
-              >
-                {groupName}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2 bg-dark-bg border border-dark-border rounded-md p-1 w-full sm:w-auto">
+        <div className="flex flex-col gap-6 relative z-10">
+          
+          {/* Top Row: Search & Action */}
+          <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+            
+            {/* Ticker Input Area */}
+            <div className="flex-1 flex flex-wrap items-center gap-2 bg-[#0d1326] border border-[#1e293b] rounded-xl p-2 shadow-inner min-h-[56px] focus-within:border-primary/50 transition-colors">
+              {tickers.map((t, idx) => (
+                <span key={t} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-transform hover:scale-105"
+                  style={{ backgroundColor: `${COLORS[idx % COLORS.length]}20`, color: COLORS[idx % COLORS.length], border: `1px solid ${COLORS[idx % COLORS.length]}40` }}>
+                  {t}
+                  <X size={14} className="cursor-pointer hover:text-white transition-colors" onClick={() => removeTicker(t)} />
+                </span>
+              ))}
               <input
                 type="text"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="New group name..."
-                className="bg-transparent text-white outline-none flex-1 px-3 py-1.5 text-xs placeholder:text-text-muted"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleAddTicker}
+                placeholder={tickers.length >= 5 ? "Maximum 5 tickers reached" : tickers.length === 0 ? "Search tickers (e.g. NVDA)..." : "Add another ticker..."}
+                disabled={tickers.length >= 5}
+                className={`bg-transparent text-white outline-none flex-1 min-w-[150px] px-3 py-1.5 text-sm font-medium placeholder:text-slate-500 ${tickers.length >= 5 ? 'cursor-not-allowed opacity-50' : ''}`}
               />
-              <button onClick={handleCreateGroup} className="bg-dark-card hover:bg-primary/20 hover:text-primary text-text-secondary px-4 py-1.5 rounded text-xs font-bold transition-all border border-dark-border">
-                Create
+            </div>
+
+            {/* Actions (Auto-peers & Compare) */}
+            <div className="flex items-center gap-3 bg-[#0d1326] border border-[#1e293b] rounded-xl p-2 shadow-inner">
+              <label className="flex items-center gap-2 cursor-pointer select-none px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
+                <div className="relative flex items-center">
+                  <input 
+                    type="checkbox" 
+                    checked={autoPeers} 
+                    onChange={(e) => setAutoPeers(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-10 h-5 bg-dark-bg rounded-full border ${autoPeers ? 'border-primary' : 'border-dark-border'} transition-colors`}></div>
+                  <div className={`absolute left-1 top-1 w-3 h-3 rounded-full transition-transform ${autoPeers ? 'translate-x-5 bg-primary shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'bg-text-muted'}`}></div>
+                </div>
+                <span className={`text-sm font-bold ${autoPeers ? 'text-white' : 'text-text-muted'}`}>Auto-Peers</span>
+              </label>
+              
+              <div className="w-px h-6 bg-[#1e293b]"></div>
+              
+              <button
+                onClick={handleRunComparison}
+                disabled={loading || (tickers.length === 0)}
+                className="flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold hover:from-primary-hover hover:to-purple-700 disabled:opacity-50 disabled:grayscale transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+              >
+                {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Zap size={16} className={tickers.length > 0 ? "animate-pulse" : ""} />}
+                {loading ? "Analyzing..." : "Compare"}
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Row: Groups & Presets */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pt-5 border-t border-[#1e293b]">
+            
+            {/* Presets List */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="text-text-muted text-xs font-black uppercase tracking-widest mr-2 flex items-center gap-1.5">
+                <Settings size={14} /> Presets
+              </div>
+              {Object.keys(groups).map(groupName => (
+                <button
+                  key={groupName}
+                  onClick={() => handleGroupChange(groupName)}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                    selectedGroup === groupName 
+                    ? 'bg-primary/20 border-primary/50 text-primary shadow-[0_0_10px_rgba(59,130,246,0.2)]' 
+                    : 'bg-[#0d1326] border-[#1e293b] text-text-secondary hover:border-primary/30 hover:text-white'
+                  }`}
+                >
+                  {groupName}
+                </button>
+              ))}
+            </div>
+
+            {/* Manage Groups */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-[#0d1326] border border-[#1e293b] rounded-lg overflow-hidden focus-within:border-primary/30 transition-colors">
+                <input
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="New preset name..."
+                  className="bg-transparent text-white outline-none px-3 py-1.5 text-xs placeholder:text-slate-500 w-32 focus:w-40 transition-all"
+                />
+                <button 
+                  onClick={handleCreateGroup} 
+                  className="bg-[#1e293b] hover:bg-primary hover:text-white text-text-secondary px-3 py-1.5 text-xs font-bold transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+
+              {selectedGroup && (
+                <>
+                  <div className="w-px h-5 bg-[#1e293b]"></div>
+                  <button onClick={handleDeleteGroup} className="text-stock-red/70 hover:text-stock-red text-xs font-bold transition-colors flex items-center gap-1">
+                    <X size={14} /> Delete
+                  </button>
+                </>
+              )}
+              
+              <div className="w-px h-5 bg-[#1e293b]"></div>
+              
+              <button 
+                onClick={handleSaveToSheets} 
+                disabled={saving || !selectedGroup} 
+                className="text-stock-green/80 hover:text-stock-green disabled:opacity-50 text-xs font-bold transition-colors flex items-center gap-1"
+              >
+                <CheckCircle2 size={14} /> {saving ? "Saving..." : "Save"}
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              {selectedGroup && (
-                <button onClick={handleDeleteGroup} className="px-4 py-2 rounded text-stock-red text-xs font-bold hover:bg-stock-red/10 transition-all">
-                  Delete Preset
-                </button>
-              )}
-              <button onClick={handleSaveToSheets} disabled={saving || !selectedGroup} className="flex items-center gap-2 bg-dark-bg border border-stock-green text-stock-green px-5 py-2 rounded-md text-xs font-bold hover:bg-stock-green hover:text-dark-bg disabled:opacity-50 transition-all">
-                {saving ? "Saving..." : "Save Presets"}
-              </button>
-            </div>
           </div>
         </div>
       </div>
