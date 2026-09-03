@@ -501,9 +501,71 @@ const ComparePage = () => {
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <Target className="text-primary" size={24} /> AI Executive Summary
               </h2>
-              <div className="prose prose-invert max-w-none text-sm text-text-secondary prose-strong:text-white leading-relaxed">
+              <div className="prose prose-invert max-w-none text-sm text-text-secondary prose-strong:text-white leading-relaxed mb-6">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{compareData.summary || "No summary provided."}</ReactMarkdown>
               </div>
+
+              {/* Ticker Verdicts */}
+              {compareData.ticker_verdicts && Object.keys(compareData.ticker_verdicts).length > 0 && (
+                <div className="space-y-3 mt-4">
+                  <div className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2">Per-Stock Verdicts</div>
+                  {Object.entries(compareData.ticker_verdicts).map(([ticker, v]) => (
+                    <div key={ticker} className="bg-dark-bg border border-dark-border/80 rounded-lg p-4 hover:border-primary/30 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-black text-white">{ticker}</span>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                            v.action === 'BUY' ? 'bg-stock-green/20 text-stock-green' :
+                            v.action === 'SELL' ? 'bg-stock-red/20 text-stock-red' :
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>{v.action}</span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                            v.conviction === 'high' ? 'text-stock-green' :
+                            v.conviction === 'low' ? 'text-stock-red' : 'text-yellow-400'
+                          }`}>{v.conviction} conviction</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs font-mono">
+                          <span className="text-text-muted">Entry: <span className="text-white">${v.entry_price}</span></span>
+                          <span className="text-text-muted">SL: <span className="text-stock-red">${v.stop_loss}</span></span>
+                          <span className="text-text-muted">TP: <span className="text-stock-green">${v.target_price}</span></span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-text-secondary leading-relaxed">{v.one_liner}</p>
+                      {v.key_risk && (
+                        <p className="text-[11px] text-stock-red/80 mt-1.5 flex items-center gap-1">
+                          <AlertTriangle size={10} /> {v.key_risk}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Portfolio Allocation */}
+              {compareData.portfolio_allocation && Object.keys(compareData.portfolio_allocation).length > 0 && (
+                <div className="mt-5 pt-4 border-t border-dark-border/50">
+                  <div className="text-xs font-bold text-text-muted uppercase tracking-widest mb-3">Suggested Portfolio Allocation</div>
+                  <div className="flex items-center gap-1 h-8 rounded-lg overflow-hidden mb-3">
+                    {Object.entries(compareData.portfolio_allocation).map(([ticker, pct], idx) => (
+                      <div
+                        key={ticker}
+                        className="h-full flex items-center justify-center text-[10px] font-bold text-dark-bg transition-all hover:opacity-90"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: COLORS[compareData.tickers?.indexOf(ticker) % COLORS.length] || COLORS[idx % COLORS.length],
+                          minWidth: pct > 5 ? 'auto' : '24px'
+                        }}
+                        title={`${ticker}: ${pct}%`}
+                      >
+                        {pct >= 10 ? `${ticker} ${pct}%` : `${pct}%`}
+                      </div>
+                    ))}
+                  </div>
+                  {compareData.allocation_rationale && (
+                    <p className="text-xs text-text-secondary leading-relaxed">{compareData.allocation_rationale}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-6">
@@ -517,7 +579,7 @@ const ComparePage = () => {
                   </div>
                 </div>
               )}
-              
+
               {compareData.anomalies && compareData.anomalies.length > 0 && (
                 <div className="bg-dark-card border border-stock-red/20 rounded-xl p-5 flex-1 shadow-lg">
                   <h3 className="text-sm font-bold text-stock-red uppercase tracking-wider mb-3 flex items-center gap-2">
