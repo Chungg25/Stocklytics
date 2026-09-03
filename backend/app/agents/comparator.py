@@ -287,7 +287,7 @@ def _build_rankings(results: list) -> dict:
     overall = sorted(
         [{"ticker": r["ticker"], "score": r["score_result"].get("total_score", 0)}
          for r in results],
-        key=lambda x: x["score"], reverse=True
+        key=lambda x: (-x["score"], x["ticker"])
     )
     for rank, item in enumerate(overall, 1):
         item["rank"] = rank

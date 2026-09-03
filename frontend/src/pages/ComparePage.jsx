@@ -602,47 +602,47 @@ const ComparePage = () => {
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Current Price</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4 font-mono">${compareData.comparison_table[t]?.price || 'N/A'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Quant Rating</td>
                           {compareData.tickers.map(t => <td key={t} className={`p-4 font-bold ${compareData.comparison_table[t]?.rating === 'BUY' ? 'text-stock-green' : compareData.comparison_table[t]?.rating === 'SELL' ? 'text-stock-red' : 'text-text-muted'}`}>{compareData.comparison_table[t]?.rating || '-'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">DCF Fair Value</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4 font-mono">{compareData.comparison_table[t]?.dcf_fair_value ? `$${compareData.comparison_table[t].dcf_fair_value.toFixed(2)}` : 'N/A'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Altman Z-Score (Risk)</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4">{compareData.comparison_table[t]?.altman_z ? compareData.comparison_table[t].altman_z.toFixed(2) : '-'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Beta (Volatility vs Market)</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4">{compareData.comparison_table[t]?.beta ? compareData.comparison_table[t].beta.toFixed(2) : '-'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">RSI (14D)</td>
                           {compareData.tickers.map(t => <td key={t} className={`p-4 ${compareData.comparison_table[t]?.rsi > 70 ? 'text-stock-red' : compareData.comparison_table[t]?.rsi < 30 ? 'text-stock-green' : ''}`}>{compareData.comparison_table[t]?.rsi ? compareData.comparison_table[t].rsi.toFixed(1) : '-'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Short-term Trend</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4 text-xs capitalize">{compareData.comparison_table[t]?.trend ? compareData.comparison_table[t].trend.replace('_', ' ') : '-'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Total Return (1Y)</td>
                           {compareData.tickers.map(t => <td key={t} className={`p-4 ${compareData.comparison_table[t]?.total_return_1y >= 0 ? 'text-stock-green' : 'text-stock-red'}`}>{compareData.comparison_table[t]?.total_return_1y ? `${compareData.comparison_table[t].total_return_1y.toFixed(1)}%` : '-'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Max Drawdown (1Y)</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4 text-stock-red">{compareData.comparison_table[t]?.max_drawdown_1y ? `${compareData.comparison_table[t].max_drawdown_1y.toFixed(1)}%` : '-'}</td>)}
-                          {compareData.sector_median && <td className="p-4 bg-primary/5">-</td>}
+                          {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                       </>
                     )}
