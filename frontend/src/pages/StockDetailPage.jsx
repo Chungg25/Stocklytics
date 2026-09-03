@@ -133,16 +133,16 @@ export default function StockDetailPage() {
           </div>
         </div>
 
-        {/* Main Content Area - 75/25 Split */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4">
+        {/* Main Content Area */}
+        <div className="flex flex-col w-full">
           
-          {/* Left Panel: Chart (75%) */}
-          <div className="flex-none lg:flex-1 lg:w-3/4 h-[600px] lg:min-h-[800px]">
+          {/* Chart Panel */}
+          <div className="w-full h-[600px] lg:min-h-[750px]">
             <StockChartPanel ticker={ticker} />
           </div>
           
-          {/* Right Panel: Sidebar (25%) */}
-          <div className="flex-none lg:w-1/4 h-[500px] lg:h-full">
+          {/* Bottom Panel: News (Formerly Sidebar) */}
+          <div className="w-full">
             <StockSidebar ticker={ticker} stockInfo={stockInfo} />
           </div>
           
