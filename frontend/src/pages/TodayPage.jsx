@@ -44,40 +44,67 @@ const FilterInputBadge = ({ label, filterKey, currentFilter, onApply, onClear })
     <div className="relative" ref={ref}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
-          ${isActive ? 'bg-primary/20 text-primary border-primary/50' : 'bg-[#1A2234] text-text-primary hover:bg-[#252E42] border-[#2D3748]'}`}>
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200
+          ${isActive 
+            ? 'bg-primary/10 text-primary border-primary hover:bg-primary/20 shadow-[0_0_10px_rgba(37,99,235,0.2)]' 
+            : 'bg-[#151C2C] text-text-primary hover:bg-[#1A2234] border-dark-border hover:border-text-muted'}`}>
         {label} 
         {isActive ? (
-           <span className="ml-1 bg-primary text-dark-bg px-1.5 py-0.5 rounded-full text-[10px]">
-             {currentFilter.min !== null ? `>${currentFilter.min}` : ''} 
-             {currentFilter.max !== null ? ` <${currentFilter.max}` : ''}
+           <span className="ml-1 bg-primary text-white px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+             {currentFilter.min !== null ? `>${currentFilter.min}` : ''}
+             {currentFilter.min !== null && currentFilter.max !== null ? ' ' : ''}
+             {currentFilter.max !== null ? `<${currentFilter.max}` : ''}
            </span>
-        ) : <Plus size={12} className="text-text-muted" />}
+        ) : <Plus size={12} className="text-text-muted transition-transform group-hover:rotate-90" />}
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-48 bg-[#151C2C] border border-dark-border rounded-lg shadow-xl z-30 p-3">
-          <div className="text-xs font-semibold text-white mb-2">{label} Filter</div>
-          <div className="flex items-center gap-2 mb-3">
-            <input 
-              type="number" 
-              placeholder="Min" 
-              value={minVal} 
-              onChange={e => setMinVal(e.target.value)}
-              className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-primary"
-            />
-            <span className="text-text-muted">-</span>
-            <input 
-              type="number" 
-              placeholder="Max" 
-              value={maxVal} 
-              onChange={e => setMaxVal(e.target.value)}
-              className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-primary"
-            />
+        <div className="absolute top-full left-0 mt-2 w-64 bg-[#151C2C]/95 backdrop-blur-xl border border-dark-border rounded-xl shadow-2xl z-30 p-4 animate-in fade-in slide-in-from-top-2">
+          <div className="text-sm font-semibold text-white mb-4 flex items-center justify-between">
+            {label} 
+            <span className="text-[10px] bg-dark-hover px-2 py-1 rounded text-text-muted font-normal uppercase tracking-wider">Filter</span>
           </div>
+          
+          <div className="space-y-3 mb-5">
+            <div>
+              <label className="text-xs text-text-muted mb-1 block">Minimum Value</label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  placeholder="e.g. 10" 
+                  value={minVal} 
+                  onChange={e => setMinVal(e.target.value)}
+                  className="w-full bg-[#0D111A] border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-text-muted mb-1 block">Maximum Value</label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  placeholder="e.g. 500" 
+                  value={maxVal} 
+                  onChange={e => setMaxVal(e.target.value)}
+                  className="w-full bg-[#0D111A] border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                />
+              </div>
+            </div>
+          </div>
+          
           <div className="flex gap-2">
-            <button onClick={() => { setMinVal(''); setMaxVal(''); onClear(filterKey); setIsOpen(false); }} className="flex-1 py-1.5 text-xs bg-dark-bg border border-dark-border rounded text-text-muted hover:text-white">Clear</button>
-            <button onClick={handleApply} className="flex-1 py-1.5 text-xs bg-primary text-dark-bg rounded font-semibold hover:bg-primary/90">Apply</button>
+            <button 
+              onClick={() => { setMinVal(''); setMaxVal(''); onClear(filterKey); setIsOpen(false); }} 
+              className="flex-1 py-2 text-xs font-medium bg-[#1A2234] border border-dark-border rounded-lg text-text-muted hover:text-white hover:bg-dark-hover transition-colors"
+            >
+              Reset
+            </button>
+            <button 
+              onClick={handleApply} 
+              className="flex-1 py-2 text-xs font-semibold bg-primary text-white rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+            >
+              Apply Filter
+            </button>
           </div>
         </div>
       )}
@@ -123,10 +150,28 @@ const TodayPage = () => {
       });
   }, []);
 
+  // Columns State
+  const allColumns = [
+    { id: 'price', label: 'Price' },
+    { id: 'change', label: 'Change' },
+    { id: 'forecast', label: 'Forecast' },
+    { id: 'marketCap', label: 'Market Cap' },
+    { id: 'score', label: 'Score' },
+    { id: 'sentiment', label: 'Sentiment' },
+    { id: 'roi1y', label: 'ROI 1Y' },
+    { id: 'history', label: 'Last 30 Days' }
+  ];
+  const [visibleColumns, setVisibleColumns] = useState(allColumns.map(c => c.id));
+  const [isColumnsOpen, setIsColumnsOpen] = useState(false);
+  const columnsRef = useRef(null);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsSectorDropdownOpen(false);
+      }
+      if (columnsRef.current && !columnsRef.current.contains(event.target)) {
+        setIsColumnsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -270,8 +315,39 @@ const TodayPage = () => {
               </div>
             )}
           </div>
-          <FilterButton label="Columns" icon={LayoutList} />
-          <FilterButton label="Filters" icon={LayoutList} active={true} />
+          <div className="relative" ref={columnsRef}>
+            <div onClick={() => setIsColumnsOpen(!isColumnsOpen)} className="cursor-pointer">
+              <FilterButton label="Columns" icon={LayoutList} rightIcon={ChevronDown} />
+            </div>
+            {isColumnsOpen && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-[#151C2C]/95 backdrop-blur-xl border border-dark-border rounded-xl shadow-2xl z-30 p-2 animate-in fade-in slide-in-from-top-2">
+                <div className="text-xs font-semibold text-text-muted mb-2 px-2">Show Columns</div>
+                {allColumns.map(col => (
+                  <label key={col.id} className="flex items-center gap-2 px-2 py-1.5 hover:bg-dark-hover rounded cursor-pointer transition-colors">
+                    <input 
+                      type="checkbox"
+                      checked={visibleColumns.includes(col.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setVisibleColumns([...visibleColumns, col.id]);
+                        else setVisibleColumns(visibleColumns.filter(id => id !== col.id));
+                      }}
+                      className="w-3.5 h-3.5 rounded border-dark-border text-primary focus:ring-0 bg-dark-bg"
+                    />
+                    <span className="text-sm text-white">{col.label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {Object.keys(activeFilters).length > 0 && (
+            <button 
+              onClick={() => setActiveFilters({})}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium border border-stock-red/50 text-stock-red bg-stock-red/10 hover:bg-stock-red/20 transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
           
           <div className="h-6 w-px bg-dark-border mx-1 hidden sm:block"></div>
           
@@ -293,6 +369,7 @@ const TodayPage = () => {
         <StockTable 
           stocks={filteredStocks} 
           loading={loading} 
+          visibleColumns={visibleColumns}
         />
       </div>
 

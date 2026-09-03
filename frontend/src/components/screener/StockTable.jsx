@@ -8,7 +8,7 @@ const formatPercent = (val) => {
   return `${sign}${val.toFixed(2)}%`;
 };
 
-const StockTableRow = ({ stock }) => {
+const StockTableRow = ({ stock, visibleColumns }) => {
   const navigate = useNavigate();
   const isPositiveChange = stock.change > 0;
   const changeColorClass = isPositiveChange ? 'text-stock-green' : 'text-stock-red';
@@ -16,6 +16,8 @@ const StockTableRow = ({ stock }) => {
   // Format data for Recharts
   const chartData = stock.history.map((val, index) => ({ uv: val }));
   const chartColor = isPositiveChange ? '#10B981' : '#EF4444';
+
+  const isVisible = (col) => !visibleColumns || visibleColumns.includes(col);
 
   return (
     <tr className="border-b border-dark-border hover:bg-dark-hover/50 transition-colors group">
@@ -37,45 +39,57 @@ const StockTableRow = ({ stock }) => {
           </div>
         </div>
       </td>
-      <td className="py-4 px-2 font-medium text-white">${stock.price.toFixed(2)}</td>
-      <td className={`py-4 px-2 font-medium ${changeColorClass}`}>
-        {formatPercent(stock.change)}
-      </td>
-      <td className="py-4 px-2">
-        <div className="text-white font-medium">${stock.forecastAmt.toFixed(2)}</div>
-        <div className="text-xs text-stock-green">+{stock.forecastPct.toFixed(1)}%</div>
-      </td>
-      <td className="py-4 px-2 font-medium text-white">{stock.marketCap}</td>
-      <td className="py-4 px-2">
-        <span className={`px-2 py-1 rounded text-xs font-bold 
-          ${stock.score >= 70 ? 'bg-stock-green/20 text-stock-green' : 'bg-yellow-500/20 text-yellow-500'}`}>
-          {stock.score}
-        </span>
-      </td>
-      <td className="py-4 px-2">
-        <span className={`px-2.5 py-1 rounded text-xs font-medium 
-          ${stock.sentiment === 'Bullish' ? 'bg-stock-green/10 text-stock-green' : 'bg-stock-red/10 text-stock-red'}`}>
-          {stock.sentiment}
-        </span>
-      </td>
-      <td className={`py-4 px-2 font-medium ${stock.roi1y > 0 ? 'text-stock-green' : 'text-stock-red'}`}>
-        {formatPercent(stock.roi1y)}
-      </td>
-      <td className="py-4 px-2 w-32">
-        <div className="h-8 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <YAxis domain={['dataMin', 'dataMax']} hide />
-              <Line type="monotone" dataKey="uv" stroke={chartColor} strokeWidth={2} dot={false} isAnimationActive={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </td>
+      {isVisible('price') && <td className="py-4 px-2 font-medium text-white">${stock.price.toFixed(2)}</td>}
+      {isVisible('change') && (
+        <td className={`py-4 px-2 font-medium ${changeColorClass}`}>
+          {formatPercent(stock.change)}
+        </td>
+      )}
+      {isVisible('forecast') && (
+        <td className="py-4 px-2">
+          <div className="text-white font-medium">${stock.forecastAmt.toFixed(2)}</div>
+          <div className="text-xs text-stock-green">+{stock.forecastPct.toFixed(1)}%</div>
+        </td>
+      )}
+      {isVisible('marketCap') && <td className="py-4 px-2 font-medium text-white">{stock.marketCap}</td>}
+      {isVisible('score') && (
+        <td className="py-4 px-2">
+          <span className={`px-2 py-1 rounded text-xs font-bold 
+            ${stock.score >= 70 ? 'bg-stock-green/20 text-stock-green' : 'bg-yellow-500/20 text-yellow-500'}`}>
+            {stock.score}
+          </span>
+        </td>
+      )}
+      {isVisible('sentiment') && (
+        <td className="py-4 px-2">
+          <span className={`px-2.5 py-1 rounded text-xs font-medium 
+            ${stock.sentiment === 'Bullish' ? 'bg-stock-green/10 text-stock-green' : 'bg-stock-red/10 text-stock-red'}`}>
+            {stock.sentiment}
+          </span>
+        </td>
+      )}
+      {isVisible('roi1y') && (
+        <td className={`py-4 px-2 font-medium ${stock.roi1y > 0 ? 'text-stock-green' : 'text-stock-red'}`}>
+          {formatPercent(stock.roi1y)}
+        </td>
+      )}
+      {isVisible('history') && (
+        <td className="py-4 px-2 w-32">
+          <div className="h-8 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <YAxis domain={['dataMin', 'dataMax']} hide />
+                <Line type="monotone" dataKey="uv" stroke={chartColor} strokeWidth={2} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </td>
+      )}
     </tr>
   );
 };
 
-const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
+const StockTable = ({ stocks, loading, visibleColumns, itemsPerPage = 15 }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -137,6 +151,9 @@ const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
     setCurrentPage(1);
   }, [stocks, sortConfig]);
 
+  const isVisible = (col) => !visibleColumns || visibleColumns.includes(col);
+  const totalCols = (visibleColumns ? visibleColumns.length : 8) + 1; // +1 for company
+
   return (
     <div className="w-full overflow-x-auto flex flex-col">
       <table className="w-full text-left text-sm whitespace-nowrap">
@@ -145,40 +162,57 @@ const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
             <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('ticker')}>
               <div className="flex items-center gap-1">COMPANY <Info size={12}/> {getSortIcon('ticker')}</div>
             </th>
-            <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('price')}>
-              <div className="flex items-center">PRICE <Info size={12} className="inline ml-1"/> {getSortIcon('price')}</div>
-            </th>
-            <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('change')}>
-              <div className="flex items-center">CHANGE <Info size={12} className="inline ml-1"/> {getSortIcon('change')}</div>
-            </th>
-            <th className="py-4 px-3 font-semibold text-text-muted">
-              <div className="flex items-center">FORECAST <Info size={12} className="inline ml-1"/></div>
-            </th>
-            <th className="py-4 px-3 font-semibold cursor-pointer transition-colors group" onClick={() => handleSort('marketCap')}>
-              <div className={`flex items-center ${sortConfig.key === 'marketCap' ? 'text-primary' : 'hover:text-white'}`}>MARKET CAP <Info size={12} className="inline ml-1"/> {getSortIcon('marketCap')}</div>
-            </th>
-            <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('score')}>
-              <div className="flex items-center">SCORE <Info size={12} className="inline ml-1"/> {getSortIcon('score')}</div>
-            </th>
-            <th className="py-4 px-3 font-semibold text-text-muted">
-              <div className="flex items-center">SENTIMENT <Info size={12} className="inline ml-1"/></div>
-            </th>
-            <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('roi1y')}>
-              <div className="flex items-center">ROI% 1Y <Info size={12} className="inline ml-1"/> {getSortIcon('roi1y')}</div>
-            </th>
-            <th className="py-4 px-3 font-semibold text-text-muted">
-              <div className="flex items-center">LAST 30 DAYS <Info size={12} className="inline ml-1"/></div>
-            </th>
+            {isVisible('price') && (
+              <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('price')}>
+                <div className="flex items-center">PRICE <Info size={12} className="inline ml-1"/> {getSortIcon('price')}</div>
+              </th>
+            )}
+            {isVisible('change') && (
+              <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('change')}>
+                <div className="flex items-center">CHANGE <Info size={12} className="inline ml-1"/> {getSortIcon('change')}</div>
+              </th>
+            )}
+            {isVisible('forecast') && (
+              <th className="py-4 px-3 font-semibold text-text-muted">
+                <div className="flex items-center">FORECAST <Info size={12} className="inline ml-1"/></div>
+              </th>
+            )}
+            {isVisible('marketCap') && (
+              <th className="py-4 px-3 font-semibold cursor-pointer transition-colors group" onClick={() => handleSort('marketCap')}>
+                <div className={`flex items-center ${sortConfig.key === 'marketCap' ? 'text-primary' : 'hover:text-white'}`}>MARKET CAP <Info size={12} className="inline ml-1"/> {getSortIcon('marketCap')}</div>
+              </th>
+            )}
+            {isVisible('score') && (
+              <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('score')}>
+                <div className="flex items-center">SCORE <Info size={12} className="inline ml-1"/> {getSortIcon('score')}</div>
+              </th>
+            )}
+            {isVisible('sentiment') && (
+              <th className="py-4 px-3 font-semibold text-text-muted">
+                <div className="flex items-center">SENTIMENT <Info size={12} className="inline ml-1"/></div>
+              </th>
+            )}
+            {isVisible('roi1y') && (
+              <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('roi1y')}>
+                <div className="flex items-center">ROI% 1Y <Info size={12} className="inline ml-1"/> {getSortIcon('roi1y')}</div>
+              </th>
+            )}
+            {isVisible('history') && (
+              <th className="py-4 px-3 font-semibold text-text-muted">
+                <div className="flex items-center">LAST 30 DAYS <Info size={12} className="inline ml-1"/></div>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan="9" className="text-center py-8 text-text-muted">Loading data...</td></tr>
+            <tr><td colSpan={totalCols} className="text-center py-8 text-text-muted">Loading data...</td></tr>
           ) : (
             paginatedStocks.map(stock => (
               <StockTableRow 
                 key={stock.ticker || stock.id} 
                 stock={stock} 
+                visibleColumns={visibleColumns}
               />
             ))
           )}
