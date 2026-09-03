@@ -4,6 +4,7 @@ Chạy DataCollector + Calculator + Scoring cho mỗi mã (parallel),
 xếp hạng, phát hiện anomaly, tính correlation, rồi AI viết báo cáo so sánh.
 """
 
+import math
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.agents.data_collector import collect
@@ -37,6 +38,18 @@ def _find_peers_for(ticker: str, info: dict, max_peers: int = 4) -> list:
     candidates = INDUSTRY_PEERS.get(industry, [])
     peers = [t for t in candidates if t != ticker.upper()]
     return peers[:max_peers]
+
+
+def _clean_nan(obj):
+    """Recursively replace float NaN and Inf with None so JSON serialization doesn't fail."""
+    if isinstance(obj, dict):
+        return {k: _clean_nan(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_clean_nan(v) for v in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+    return obj
 
 
 def _analyze_one(ticker: str) -> dict:
@@ -478,7 +491,7 @@ def compare(tickers: list[str], auto_peers: bool = False) -> dict:
     # AI synthesis (1 LLM call)
     ai_verdict = _ai_synthesize(tickers, rankings, anomalies, results, correlation, historical)
 
-    return {
+    raw_result = {
         "type": "comparison",
         "tickers": [r["ticker"] for r in results],
         "sector": sector,
@@ -494,3 +507,5 @@ def compare(tickers: list[str], auto_peers: bool = False) -> dict:
         "summary": ai_verdict.get("summary", ""),
         "errors": errors if errors else None,
     }
+    
+    return _clean_nan(raw_result)
