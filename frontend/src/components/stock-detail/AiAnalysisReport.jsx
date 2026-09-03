@@ -106,7 +106,7 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto p-6 bg-dark-bg">
+          <div className="flex-1 overflow-y-auto p-6 bg-dark-bg no-scrollbar">
             
             {/* Synthesis Tab */}
             {activeTab === 'synthesis' && synthesis && (
