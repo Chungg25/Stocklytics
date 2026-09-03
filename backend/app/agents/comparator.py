@@ -503,7 +503,7 @@ def compare(tickers: list[str], auto_peers: bool = False) -> dict:
         "correlation": correlation,
         "chart_data": chart_data,
         "best_for": ai_verdict.get("best_for", {}),
-        "winner": ai_verdict.get("winner", {}),
+        "winner": rankings["overall"][0] if rankings.get("overall") else ai_verdict.get("winner", {}),
         "summary": ai_verdict.get("summary", ""),
         "errors": errors if errors else None,
     }
