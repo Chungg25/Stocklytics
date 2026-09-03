@@ -601,7 +601,7 @@ const ComparePage = () => {
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
                           <td className="p-4 text-text-secondary">Current Price</td>
-                          {compareData.tickers.map(t => <td key={t} className="p-4 font-mono">${compareData.comparison_table[t]?.price || 'N/A'}</td>)}
+                          {compareData.tickers.map(t => <td key={t} className="p-4 font-mono">${compareData.comparison_table[t]?.price ? compareData.comparison_table[t].price.toFixed(2) : 'N/A'}</td>)}
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
@@ -615,12 +615,12 @@ const ComparePage = () => {
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
-                          <td className="p-4 text-text-secondary">Altman Z-Score (Risk)</td>
+                          <td className="p-4 text-text-secondary">Altman Z-Score</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4">{compareData.comparison_table[t]?.altman_z ? compareData.comparison_table[t].altman_z.toFixed(2) : '-'}</td>)}
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
-                          <td className="p-4 text-text-secondary">Beta (Volatility vs Market)</td>
+                          <td className="p-4 text-text-secondary">Beta</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4">{compareData.comparison_table[t]?.beta ? compareData.comparison_table[t].beta.toFixed(2) : '-'}</td>)}
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
@@ -630,17 +630,17 @@ const ComparePage = () => {
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
-                          <td className="p-4 text-text-secondary">Short-term Trend</td>
+                          <td className="p-4 text-text-secondary">Trend</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4 text-xs capitalize">{compareData.comparison_table[t]?.trend ? compareData.comparison_table[t].trend.replace('_', ' ') : '-'}</td>)}
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="border-b border-dark-border/50 hover:bg-dark-bg/30">
-                          <td className="p-4 text-text-secondary">Total Return (1Y)</td>
+                          <td className="p-4 text-text-secondary">Return (1Y)</td>
                           {compareData.tickers.map(t => <td key={t} className={`p-4 ${compareData.comparison_table[t]?.total_return_1y >= 0 ? 'text-stock-green' : 'text-stock-red'}`}>{compareData.comparison_table[t]?.total_return_1y ? `${compareData.comparison_table[t].total_return_1y.toFixed(1)}%` : '-'}</td>)}
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
                         <tr className="hover:bg-dark-bg/30">
-                          <td className="p-4 text-text-secondary">Max Drawdown (1Y)</td>
+                          <td className="p-4 text-text-secondary">Max Drawdown</td>
                           {compareData.tickers.map(t => <td key={t} className="p-4 text-stock-red">{compareData.comparison_table[t]?.max_drawdown_1y ? `${compareData.comparison_table[t].max_drawdown_1y.toFixed(1)}%` : '-'}</td>)}
                           {compareData.sector_median && <td className="p-4 bg-primary/5"></td>}
                         </tr>
