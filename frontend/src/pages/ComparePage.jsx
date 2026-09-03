@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Home, ChevronRight, Activity, X, TrendingUp, Settings, Trophy, AlertTriangle, Target, Info, CheckCircle2, ShieldCheck, BarChart2, Zap, LayoutGrid } from 'lucide-react';
+import { Home, ChevronRight, Activity, X, TrendingUp, Settings, Trophy, AlertTriangle, Target, Info, CheckCircle2, ShieldCheck, BarChart2, Zap, LayoutGrid, ChevronDown, ChevronUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import PageLayout from '../components/layout/PageLayout';
 import ReactMarkdown from 'react-markdown';
@@ -42,6 +42,7 @@ const ComparePage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [expandedCategories, setExpandedCategories] = useState({});
   const [successMsg, setSuccessMsg] = useState(null);
 
   useEffect(() => {
@@ -108,6 +109,7 @@ const ComparePage = () => {
     setLoading(true);
     setError(null);
     setCompareData(null);
+    setExpandedCategories({});
     try {
       const response = await fetch(`${API_URL}/api/analysis/compare`, {
         method: 'POST',
@@ -210,22 +212,7 @@ const ComparePage = () => {
     }
   };
 
-  const formattedChartData = useMemo(() => {
-    if (compareData && compareData.chart_data) {
-      // If AI comparison data is available, format it (though we now rely on basic chart)
-      const merged = {};
-      Object.keys(compareData.chart_data).forEach(ticker => {
-        const arr = compareData.chart_data[ticker];
-        if (Array.isArray(arr)) {
-          arr.forEach(pt => {
-            if (!merged[pt.date]) merged[pt.date] = { date: pt.date };
-            merged[pt.date][ticker] = pt.value;
-          });
-        }
-      });
-      return Object.values(merged).sort((a, b) => new Date(a.date) - new Date(b.date));
-    }
-    
+  const formattedBasicChartData = useMemo(() => {
     // Process fullBasicData based on timeframe locally to avoid API calls!
     if (!fullBasicData || fullBasicData.length === 0) return [];
     
@@ -261,7 +248,22 @@ const ComparePage = () => {
       return newRow;
     });
 
-  }, [compareData, fullBasicData, timeframe, tickers]);
+  }, [fullBasicData, timeframe, tickers]);
+
+  const formattedAIChartData = useMemo(() => {
+    if (!compareData || !compareData.chart_data) return [];
+    const merged = {};
+    Object.keys(compareData.chart_data).forEach(ticker => {
+      const arr = compareData.chart_data[ticker];
+      if (Array.isArray(arr)) {
+        arr.forEach(pt => {
+          if (!merged[pt.date]) merged[pt.date] = { date: pt.date };
+          merged[pt.date][ticker] = pt.value;
+        });
+      }
+    });
+    return Object.values(merged).sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [compareData]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -461,7 +463,7 @@ const ComparePage = () => {
         </div>
         <div className="h-[380px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={formattedChartData} margin={{ top: 10, right: 100, left: -20, bottom: 0 }}>
+            <LineChart data={formattedBasicChartData} margin={{ top: 10, right: 100, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
               <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} minTickGap={40} />
               <YAxis stroke="#6B7280" tick={{ fill: '#6B7280', fontSize: 12 }} domain={['auto', 'auto']} tickFormatter={(v) => `${v}%`} />
@@ -472,13 +474,13 @@ const ComparePage = () => {
                 <Line
                   key={t}
                   type="monotone"
-                  dataKey={compareData && compareData.chart_data ? t : `${t}_perf`}
+                  dataKey={`${t}_perf`}
                   name={t}
                   stroke={COLORS[idx % COLORS.length]}
                   strokeWidth={2.5}
                   dot={false}
                   isAnimationActive={true}
-                  label={<LastPointLabel name={t} dataLength={formattedChartData.length} color={COLORS[idx % COLORS.length]} />}
+                  label={<LastPointLabel name={t} dataLength={formattedBasicChartData.length} color={COLORS[idx % COLORS.length]} />}
                 />
               ))}
             </LineChart>
@@ -596,15 +598,47 @@ const ComparePage = () => {
                 <ShieldCheck className="text-primary" size={20} /> AI Categorization
               </h2>
               <div className="space-y-4 flex-1">
-                {compareData.best_for && Object.entries(compareData.best_for).map(([category, info]) => (
-                  <div key={category} className="bg-dark-bg border border-dark-border/80 rounded-lg p-4 transition-all hover:border-primary/40 group">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{category.replace('_', ' ')}</span>
-                      <span className="text-sm font-black text-primary px-2 py-0.5 bg-primary/10 rounded">{info.ticker}</span>
+                {compareData.best_for && Object.entries(compareData.best_for).map(([category, info]) => {
+                  const isExpanded = expandedCategories[category];
+                  return (
+                    <div key={category} className="bg-dark-bg border border-dark-border/80 rounded-lg transition-all hover:border-primary/40 group overflow-hidden">
+                      <div 
+                        className="p-4 cursor-pointer flex flex-col gap-2"
+                        onClick={() => setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }))}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+                            {category.replace('_', ' ')}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-black text-primary px-2 py-0.5 bg-primary/10 rounded">{info.ticker}</span>
+                            {info.all_assessments && info.all_assessments.length > 0 && (
+                              <button className="text-text-muted hover:text-white transition-colors">
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-text-secondary leading-relaxed group-hover:text-text-primary transition-colors pr-6">{info.reason}</p>
+                      </div>
+                      
+                      {/* Expanded Section for all other assessments */}
+                      {isExpanded && info.all_assessments && info.all_assessments.length > 0 && (
+                        <div className="px-4 pb-4 pt-2 border-t border-dark-border/50 bg-black/20">
+                          <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3">All Assessments</div>
+                          <div className="space-y-3">
+                            {info.all_assessments.filter(a => a.ticker !== info.ticker).map((assessment, idx) => (
+                              <div key={idx} className="flex flex-col gap-1">
+                                <span className="text-xs font-bold text-white">{assessment.ticker}</span>
+                                <p className="text-xs text-text-secondary leading-snug">{assessment.analysis}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-text-secondary leading-relaxed group-hover:text-text-primary transition-colors">{info.reason}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -356,18 +356,37 @@ def _ai_synthesize(tickers: list, rankings: dict, anomalies: list,
         response = execute_with_fallback(
             messages=[
                 {"role": "system", "content": """You are a stock comparison analyst. You receive pre-calculated rankings, anomalies, historical performance, and correlation data. Your job is to:
-1. Pick the "best for" each purpose (growth, value, risk/reward, diversification) with a one-sentence reason
-2. Declare an overall winner
-3. Write a concise 2-3 sentence summary highlighting the key tension between these stocks
-4. Note diversification insight if correlation data is available
+1. Pick the "best for" each purpose (growth, value, risk_reward, diversification). State the winner and a one-sentence reason.
+2. For EACH purpose, also provide a very brief (1 sentence) assessment/ranking for ALL OTHER stocks in the group.
+3. Declare an overall winner.
+4. Write a concise 2-3 sentence summary highlighting the key tension between these stocks.
 
 Respond ONLY in valid JSON:
 {
   "best_for": {
-    "growth": {"ticker": "X", "reason": "..."},
-    "value": {"ticker": "X", "reason": "..."},
-    "risk_reward": {"ticker": "X", "reason": "..."},
-    "diversification": {"ticker": "X", "reason": "..."}
+    "growth": {
+      "ticker": "X",
+      "reason": "...",
+      "all_assessments": [
+        {"ticker": "X", "analysis": "..."},
+        {"ticker": "Y", "analysis": "..."}
+      ]
+    },
+    "value": {
+      "ticker": "X",
+      "reason": "...",
+      "all_assessments": [{"ticker": "X", "analysis": "..."}, {"ticker": "Y", "analysis": "..."}]
+    },
+    "risk_reward": {
+      "ticker": "X",
+      "reason": "...",
+      "all_assessments": [{"ticker": "X", "analysis": "..."}, {"ticker": "Y", "analysis": "..."}]
+    },
+    "diversification": {
+      "ticker": "X",
+      "reason": "...",
+      "all_assessments": [{"ticker": "X", "analysis": "..."}, {"ticker": "Y", "analysis": "..."}]
+    }
   },
   "winner": {"ticker": "X", "score": <number>},
   "summary": "<2-3 sentences>"
