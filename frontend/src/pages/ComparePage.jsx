@@ -34,7 +34,7 @@ const ComparePage = () => {
   const [autoPeers, setAutoPeers] = useState(false);
 
   // Basic Fast Chart State
-  const [basicData, setBasicData] = useState([]);
+  const [fullBasicData, setFullBasicData] = useState([]);
   const [loadingBasic, setLoadingBasic] = useState(false);
 
   // Deep AI Analysis State
@@ -66,11 +66,11 @@ const ComparePage = () => {
     fetchGroups();
   }, []);
 
-  // Auto-fetch basic fast chart data when tickers or timeframe change
+  // Auto-fetch basic fast chart data ONCE (5Y) when tickers change
   useEffect(() => {
     const fetchBasicChart = async () => {
       if (tickers.length === 0) {
-        setBasicData([]);
+        setFullBasicData([]);
         return;
       }
       setLoadingBasic(true);
@@ -79,11 +79,11 @@ const ComparePage = () => {
         const response = await fetch(`${API_URL}/api/compare`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tickers, timeframe, indicators: [] })
+          body: JSON.stringify({ tickers, timeframe: '5Y', indicators: [] })
         });
         const resData = await response.json();
         if (resData.status === 'success') {
-          setBasicData(resData.data);
+          setFullBasicData(resData.data);
         } else {
           setError(resData.message);
         }
@@ -94,7 +94,7 @@ const ComparePage = () => {
       }
     };
     fetchBasicChart();
-  }, [tickers, timeframe]);
+  }, [tickers]); // Only refetch when tickers change!
 
   const handleRunComparison = async () => {
     if (tickers.length === 0) {
@@ -225,8 +225,43 @@ const ComparePage = () => {
       });
       return Object.values(merged).sort((a, b) => new Date(a.date) - new Date(b.date));
     }
-    return basicData;
-  }, [compareData, basicData]);
+    
+    // Process fullBasicData based on timeframe locally to avoid API calls!
+    if (!fullBasicData || fullBasicData.length === 0) return [];
+    
+    let daysToSubtract = 90;
+    if (timeframe === '1M') daysToSubtract = 30;
+    else if (timeframe === '3M') daysToSubtract = 90;
+    else if (timeframe === '6M') daysToSubtract = 180;
+    else if (timeframe === '1Y') daysToSubtract = 365;
+    else if (timeframe === '3Y') daysToSubtract = 365 * 3;
+    else if (timeframe === '5Y') daysToSubtract = 365 * 5;
+
+    const endDate = new Date(fullBasicData[fullBasicData.length - 1].date);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - daysToSubtract);
+    
+    // 1. Slice
+    const slicedData = fullBasicData.filter(d => new Date(d.date) >= startDate);
+    if (slicedData.length === 0) return [];
+
+    // 2. Re-base everything so starting point is 0%
+    const baseRow = slicedData[0];
+    
+    return slicedData.map(row => {
+      const newRow = { ...row };
+      tickers.forEach(t => {
+        const perfKey = `${t}_perf`;
+        if (baseRow[perfKey] !== undefined && row[perfKey] !== undefined) {
+           const r_k = baseRow[perfKey] / 100; // Return at start of timeframe
+           const r_t = row[perfKey] / 100;     // Return today
+           newRow[perfKey] = (((1 + r_t) / (1 + r_k)) - 1) * 100;
+        }
+      });
+      return newRow;
+    });
+
+  }, [compareData, fullBasicData, timeframe, tickers]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
