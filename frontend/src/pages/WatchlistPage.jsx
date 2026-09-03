@@ -14,8 +14,17 @@ export default function WatchlistPage() {
   // Watchlist form
   const [newTicker, setNewTicker] = useState("");
   const [newGroup, setNewGroup] = useState("Default");
+  const [stockData, setStockData] = useState([]);
 
   useEffect(() => {
+    // Fetch stock details to enrich the watchlist
+    fetch(`${API_URL}/api/stocks`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setStockData(data);
+      })
+      .catch(console.error);
+
     if (!user) return;
     fetchData();
     
@@ -169,23 +178,57 @@ export default function WatchlistPage() {
                 
                 <div className="p-3">
                   <div className="space-y-2">
-                    {groupedWatchlist[group].map(w => (
+                    {groupedWatchlist[group].map(w => {
+                      const info = stockData.find(s => s.ticker === w.ticker) || {};
+                      const price = info.price || 0;
+                      const change = info.change_percent || 0;
+                      const isPositive = change >= 0;
+                      
+                      return (
                       <div 
                         key={w.id} 
                         onClick={() => navigate(`/stock/${w.ticker}`)}
                         className="flex items-center justify-between p-3.5 bg-dark-bg rounded-lg border border-transparent hover:border-dark-border group transition-all duration-200 cursor-pointer hover:bg-dark-hover shadow-sm hover:shadow-md"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-dark-card to-dark-bg border border-dark-border flex items-center justify-center text-white font-black text-lg shadow-inner group-hover:border-primary/50 transition-colors">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="w-11 h-11 shrink-0 rounded-lg bg-gradient-to-br from-dark-card to-dark-bg border border-dark-border flex items-center justify-center text-white font-black text-lg shadow-inner group-hover:border-primary/50 transition-colors">
                             {w.ticker.charAt(0)}
                           </div>
-                          <div>
-                            <div className="font-bold text-white text-base group-hover:text-primary transition-colors">{w.ticker}</div>
-                            <div className="text-[10px] uppercase font-bold tracking-wider text-text-muted mt-0.5">Stock</div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white text-base group-hover:text-primary transition-colors flex items-center gap-2">
+                              {w.ticker}
+                              {info.rating && (
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider ${info.ai_score >= 80 ? 'bg-stock-green/20 text-stock-green' : info.ai_score >= 50 ? 'bg-yellow-400/20 text-yellow-400' : 'bg-stock-red/20 text-stock-red'}`}>
+                                  {info.rating}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-text-muted mt-0.5 truncate max-w-[120px] sm:max-w-[200px]">
+                              {info.company || 'Unknown Asset'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Financial Info */}
+                        <div className="flex items-center gap-5 mr-4 opacity-90 group-hover:opacity-100 transition-opacity">
+                          {info.ai_score && (
+                            <div className="hidden sm:flex flex-col items-end">
+                              <span className="text-[10px] uppercase text-text-muted font-bold tracking-wider mb-0.5">AI Score</span>
+                              <span className={`text-sm font-bold ${info.ai_score >= 80 ? 'text-stock-green' : info.ai_score >= 50 ? 'text-yellow-400' : 'text-stock-red'}`}>
+                                {info.ai_score}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex flex-col items-end min-w-[70px]">
+                            <span className="text-sm font-bold text-white font-mono">${price ? price.toFixed(2) : '--'}</span>
+                            <span className={`text-xs font-semibold flex items-center gap-0.5 ${isPositive ? 'text-stock-green' : 'text-stock-red'}`}>
+                              {isPositive ? '+' : ''}{change ? change.toFixed(2) : '0.00'}%
+                            </span>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
                           <button 
                             className="p-2 rounded-md bg-dark-card text-text-muted hover:text-white hover:bg-primary/20 border border-transparent hover:border-primary/30 transition-all" 
                             title="View details"
@@ -201,7 +244,7 @@ export default function WatchlistPage() {
                           </button>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </div>
               </div>
