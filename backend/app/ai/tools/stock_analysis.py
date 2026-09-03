@@ -96,3 +96,23 @@ def score_stock(ticker: str) -> Dict[str, Any]:
 def full_stock_analysis(ticker: str) -> Dict[str, Any]:
     from app.agents.orchestrator import analyze_stock
     return analyze_stock(ticker, save=False)
+
+
+@tool(
+    name="compare_stocks",
+    description="Compare 2-5 stocks side by side: rank by score, P/E, growth, DCF upside, Piotroski. Detects anomalies (e.g., high growth but low P/E). AI picks 'best for' growth, value, and risk/reward.",
+    parameters={
+        "type": "object",
+        "properties": {
+            "tickers": {
+                "type": "string",
+                "description": "Comma-separated ticker symbols (e.g., 'NVDA,AMD,AVGO')"
+            }
+        },
+        "required": ["tickers"]
+    }
+)
+def compare_stocks(tickers: str) -> Dict[str, Any]:
+    from app.agents.comparator import compare
+    ticker_list = [t.strip() for t in tickers.split(",") if t.strip()]
+    return compare(ticker_list)

@@ -1,5 +1,5 @@
 """
-UC1 Analysis API — Full stock analysis endpoint.
+Analysis API — UC1 (single stock) + UC2 (comparison) endpoints.
 """
 
 from fastapi import APIRouter, HTTPException, Header
@@ -15,6 +15,10 @@ class AnalyzeRequest(BaseModel):
 
 class QuickScoreRequest(BaseModel):
     ticker: str
+
+
+class CompareRequest(BaseModel):
+    tickers: list[str]
 
 
 @router.post("/analyze")
@@ -57,6 +61,26 @@ def run_quick_score(req: QuickScoreRequest):
                 "breakdown": score_result.get("breakdown", {}),
             }
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/compare")
+def run_comparison(req: CompareRequest):
+    try:
+        from app.agents.comparator import compare
+
+        if len(req.tickers) < 2:
+            raise HTTPException(status_code=400, detail="Cần ít nhất 2 mã để so sánh")
+        if len(req.tickers) > 5:
+            raise HTTPException(status_code=400, detail="Tối đa 5 mã")
+
+        result = compare(req.tickers)
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        return {"status": "success", "data": result}
     except HTTPException:
         raise
     except Exception as e:
