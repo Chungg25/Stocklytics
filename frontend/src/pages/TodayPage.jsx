@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2 } from 'lucide-react';
 import StockTable from '../components/screener/StockTable';
+import StockGrid from '../components/screener/StockGrid';
 import PageLayout from '../components/layout/PageLayout';
 
 const FilterButton = ({ label, icon: Icon, rightIcon: RightIcon, active }) => (
@@ -132,6 +133,9 @@ const TodayPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   
+  // View Mode State
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+
   // Parametric Filters State (e.g. { price: {min: 10, max: 100}, change: {min: 5, max: null} })
   const [activeFilters, setActiveFilters] = useState({});
   
@@ -359,18 +363,35 @@ const TodayPage = () => {
         </div>
         
         <div className="flex items-center gap-2 border border-dark-border rounded-md p-1 bg-dark-bg">
-          <button className="p-1 rounded bg-dark-hover text-white"><LayoutList size={16} /></button>
-          <button className="p-1 rounded text-text-muted hover:text-white"><Grid size={16} /></button>
+          <button 
+            onClick={() => setViewMode('list')}
+            className={`p-1 rounded transition-colors ${viewMode === 'list' ? 'bg-dark-hover text-white' : 'text-text-muted hover:text-white'}`}
+          >
+            <LayoutList size={16} />
+          </button>
+          <button 
+            onClick={() => setViewMode('grid')}
+            className={`p-1 rounded transition-colors ${viewMode === 'grid' ? 'bg-dark-hover text-white' : 'text-text-muted hover:text-white'}`}
+          >
+            <Grid size={16} />
+          </button>
         </div>
       </div>
 
-      {/* Data Table */}
+      {/* Data View */}
       <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden mb-4">
-        <StockTable 
-          stocks={filteredStocks} 
-          loading={loading} 
-          visibleColumns={visibleColumns}
-        />
+        {viewMode === 'list' ? (
+          <StockTable 
+            stocks={filteredStocks} 
+            loading={loading} 
+            visibleColumns={visibleColumns}
+          />
+        ) : (
+          <StockGrid 
+            stocks={filteredStocks} 
+            loading={loading}
+          />
+        )}
       </div>
 
     </PageLayout>
