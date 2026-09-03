@@ -158,7 +158,7 @@ const StockGrid = ({ stocks, loading, itemsPerPage = 20 }) => {
     <div className="w-full flex flex-col">
       {/* Grid Sorting Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-dark-border bg-dark-card rounded-t-lg">
-        <div className="text-sm font-semibold text-white">Grid View ({stocks.length} assets)</div>
+        <div className="text-sm font-semibold text-white">Grid View</div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-text-muted">Sort by:</span>
           <div className="flex bg-[#151C2C] border border-dark-border rounded-md overflow-hidden p-0.5">
