@@ -43,14 +43,27 @@ export default function WatchlistPage() {
   };
 
   const handleAddTicker = async () => {
-    if (!newTicker.trim()) return;
+    const tickerName = newTicker.trim().toUpperCase();
+    if (!tickerName) return;
+
+    // Client-side validation for duplicates
+    if (watchlist.some(w => w.ticker === tickerName)) {
+      alert(`Mã cổ phiếu ${tickerName} đã có trong Watchlist của bạn!`);
+      return;
+    }
+
     try {
       const { error } = await supabase.from('ai_watchlist').insert({ 
-        ticker: newTicker.trim().toUpperCase(),
+        ticker: tickerName,
         group_name: newGroup.trim() || 'Default',
         user_id: user.id
       });
-      if (error) throw error;
+      
+      if (error) {
+        if (error.code === '23505') throw new Error("Mã cổ phiếu này đã tồn tại trong Watchlist!");
+        throw error;
+      }
+      
       setNewTicker("");
       fetchData();
     } catch (err) {
