@@ -8,7 +8,7 @@ const formatPercent = (val) => {
   return `${sign}${val.toFixed(2)}%`;
 };
 
-const StockTableRow = ({ stock }) => {
+const StockTableRow = ({ stock, isSelected, onToggle }) => {
   const navigate = useNavigate();
   const isPositiveChange = stock.change > 0;
   const changeColorClass = isPositiveChange ? 'text-stock-green' : 'text-stock-red';
@@ -18,7 +18,15 @@ const StockTableRow = ({ stock }) => {
   const chartColor = isPositiveChange ? '#10B981' : '#EF4444';
 
   return (
-    <tr className="border-b border-dark-border hover:bg-dark-hover/50 transition-colors group">
+    <tr className={`border-b border-dark-border hover:bg-dark-hover/50 transition-colors group ${isSelected ? 'bg-primary/5' : ''}`}>
+      <td className="py-4 px-3 text-center">
+        <input 
+          type="checkbox" 
+          checked={isSelected} 
+          onChange={onToggle}
+          className="w-4 h-4 rounded border-dark-border bg-dark-bg text-primary focus:ring-primary focus:ring-offset-dark-bg cursor-pointer"
+        />
+      </td>
       <td className="py-4 px-2">
         <div className="flex items-center gap-3">
           <div>
@@ -75,7 +83,7 @@ const StockTableRow = ({ stock }) => {
   );
 };
 
-const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
+const StockTable = ({ stocks, loading, selectedTickers, onToggleSelection, itemsPerPage = 15 }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -142,6 +150,9 @@ const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
       <table className="w-full text-left text-sm whitespace-nowrap">
         <thead className="bg-[#151C2C] border-b-2 border-dark-border">
           <tr className="text-text-muted text-xs uppercase tracking-wider select-none">
+            <th className="py-4 px-3 w-10 text-center">
+              {/* Optional: Select All checkbox could go here */}
+            </th>
             <th className="py-4 px-3 font-semibold cursor-pointer hover:text-white transition-colors group" onClick={() => handleSort('ticker')}>
               <div className="flex items-center gap-1">COMPANY <Info size={12}/> {getSortIcon('ticker')}</div>
             </th>
@@ -173,10 +184,15 @@ const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
         </thead>
         <tbody>
           {loading ? (
-            <tr><td colSpan="9" className="text-center py-8 text-text-muted">Loading data...</td></tr>
+            <tr><td colSpan="10" className="text-center py-8 text-text-muted">Loading data...</td></tr>
           ) : (
             paginatedStocks.map(stock => (
-              <StockTableRow key={stock.ticker || stock.id} stock={stock} />
+              <StockTableRow 
+                key={stock.ticker || stock.id} 
+                stock={stock} 
+                isSelected={selectedTickers?.includes(stock.ticker || stock.id)}
+                onToggle={() => onToggleSelection?.(stock.ticker || stock.id)}
+              />
             ))
           )}
         </tbody>
@@ -186,7 +202,7 @@ const StockTable = ({ stocks, loading, itemsPerPage = 15 }) => {
       {!loading && totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-4 border-t-2 border-dark-border bg-[#151C2C]">
           <div className="text-sm text-text-muted">
-            Showing <span className="text-white font-medium">{startIndex + 1}</span> to <span className="text-white font-medium">{Math.min(startIndex + itemsPerPage, sortedStocks.length)}</span> of <span className="text-white font-medium">{sortedStocks.length}</span> entries
+            Showing <span className="text-white font-medium">{startIndex + 1}</span> to <span className="text-white font-medium">{Math.min(startIndex + itemsPerPage, sortedStocks.length)}</span>
           </div>
           <div className="flex items-center gap-2">
             <button 

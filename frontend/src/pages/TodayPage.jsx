@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2 } from 'lucide-react';
+import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import StockTable from '../components/screener/StockTable';
 import PageLayout from '../components/layout/PageLayout';
 
@@ -12,23 +13,41 @@ const FilterButton = ({ label, icon: Icon, rightIcon: RightIcon, active }) => (
   </button>
 );
 
-const FilterBadge = ({ label }) => (
-  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#1A2234] text-text-primary hover:bg-[#252E42] border border-[#2D3748] transition-colors">
-    {label} <Plus size={12} className="text-text-muted" />
+const FilterBadge = ({ label, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
+      ${active ? 'bg-primary/20 text-primary border-primary/50' : 'bg-[#1A2234] text-text-primary hover:bg-[#252E42] border-[#2D3748]'}`}>
+    {label} {active ? <ChevronDown size={12}/> : <Plus size={12} className="text-text-muted" />}
   </button>
 );
 
+const parseMarketCap = (str) => {
+  if (typeof str !== 'string' || !str || str === 'N/A') return 0;
+  const val = parseFloat(str.replace(/[^0-9.-]/g, ''));
+  if (str.includes('T')) return val * 1e12;
+  if (str.includes('B')) return val * 1e9;
+  if (str.includes('M')) return val * 1e6;
+  return val;
+};
+
 const TodayPage = () => {
+  const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
+  
   const [selectedSector, setSelectedSector] = useState("All Sectors");
   const [isSectorDropdownOpen, setIsSectorDropdownOpen] = useState(false);
   
-  // Search & Pagination State
+  // Search State
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  
+  // Quick Filters State
+  const [activeFilters, setActiveFilters] = useState([]);
+  
+  // Selection State
+  const [selectedTickers, setSelectedTickers] = useState([]);
   
   const dropdownRef = useRef(null);
 
@@ -60,29 +79,21 @@ const TodayPage = () => {
     return ["All Sectors", ...Array.from(uniqueSectors).sort()];
   }, [stocks]);
 
-  // Handle Dynamic Search
   const handleSearch = async (e) => {
     e.preventDefault();
     const query = searchQuery.trim().toUpperCase();
     if (!query) return;
 
-    // Check if we already have it locally
     const existsLocally = stocks.some(s => s.ticker === query || s.name.toUpperCase().includes(query));
-    if (existsLocally) {
-      setCurrentPage(1);
-      return;
-    }
+    if (existsLocally) return;
 
-    // Not found locally -> fetch from backend
     setIsSearching(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stocks/${query}`);
       const data = await res.json();
       if (data.status === 'success' && data.data) {
-        // Add to our list
         setStocks(prev => [data.data, ...prev]);
         setSearchQuery("");
-        setCurrentPage(1);
       } else {
         alert("Không tìm thấy mã cổ phiếu: " + query);
       }
@@ -94,28 +105,54 @@ const TodayPage = () => {
     }
   };
 
+  const toggleFilter = (filterKey) => {
+    setActiveFilters(prev => 
+      prev.includes(filterKey) ? prev.filter(f => f !== filterKey) : [...prev, filterKey]
+    );
+  };
+
+  const toggleSelection = (ticker) => {
+    setSelectedTickers(prev => 
+      prev.includes(ticker) ? prev.filter(t => t !== ticker) : [...prev, ticker]
+    );
+  };
+
   const filteredStocks = useMemo(() => {
     let result = stocks;
+    
+    // 1. Sector Filter
     if (selectedSector !== "All Sectors") {
       result = result.filter(s => s.sector === selectedSector);
     }
+    
+    // 2. Search Filter
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase();
       result = result.filter(s => 
-        s.ticker.toLowerCase().includes(query) || 
-        s.name.toLowerCase().includes(query)
+        (s.ticker || "").toLowerCase().includes(query) || 
+        (s.name || "").toLowerCase().includes(query)
       );
     }
-    return result;
-  }, [stocks, selectedSector, searchQuery]);
+    
+    // 3. Quick Badges Filter
+    if (activeFilters.includes('Gainers')) {
+      result = result.filter(s => s.change > 0);
+    }
+    if (activeFilters.includes('Mega Cap')) {
+      result = result.filter(s => parseMarketCap(s.marketCap) > 200e9); // > 200B
+    }
+    if (activeFilters.includes('High Score')) {
+      result = result.filter(s => s.score >= 60);
+    }
+    if (activeFilters.includes('Bullish')) {
+      result = result.filter(s => s.sentiment === 'Bullish');
+    }
+    if (activeFilters.includes('High ROI')) {
+      result = result.filter(s => s.roi1y >= 20);
+    }
 
-  // Pagination Logic
-  const totalEntries = filteredStocks.length;
-  const totalPages = Math.ceil(totalEntries / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, totalEntries);
-  
-  const displayedStocks = filteredStocks.slice(startIndex, endIndex);
+    return result;
+  }, [stocks, selectedSector, searchQuery, activeFilters]);
 
   return (
     <PageLayout>
@@ -145,7 +182,7 @@ const TodayPage = () => {
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search symbol (e.g. AAPL) and Enter..." 
+            placeholder="Search symbol (e.g. AAPL)..." 
             className="w-full bg-dark-card border border-dark-border rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-primary transition-colors"
           />
         </form>
@@ -159,7 +196,7 @@ const TodayPage = () => {
               <FilterButton label={selectedSector === "All Sectors" ? "All Sectors" : selectedSector} rightIcon={ChevronDown} active={true} />
             </div>
             {isSectorDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-[#151C2C] border border-dark-border rounded-md shadow-lg z-20 py-1">
+              <div className="absolute top-full left-0 mt-1 w-48 bg-[#151C2C] border border-dark-border rounded-md shadow-lg z-20 py-1 max-h-60 overflow-y-auto no-scrollbar">
                 {sectors.map(sector => (
                   <button 
                     key={sector} 
@@ -167,7 +204,6 @@ const TodayPage = () => {
                     onClick={() => {
                       setSelectedSector(sector);
                       setIsSectorDropdownOpen(false);
-                      setCurrentPage(1);
                     }}
                   >
                     {sector}
@@ -181,12 +217,11 @@ const TodayPage = () => {
           
           <div className="h-6 w-px bg-dark-border mx-1 hidden sm:block"></div>
           
-          <FilterBadge label="Price" />
-          <FilterBadge label="Price Change (%)" />
-          <FilterBadge label="Market Cap" />
-          <FilterBadge label="Dividend Yield (%)" />
-          <FilterBadge label="P/E Ratio" />
-          <FilterBadge label="EPS" />
+          <FilterBadge label="Gainers" active={activeFilters.includes('Gainers')} onClick={() => toggleFilter('Gainers')} />
+          <FilterBadge label="Mega Cap (>200B)" active={activeFilters.includes('Mega Cap')} onClick={() => toggleFilter('Mega Cap')} />
+          <FilterBadge label="High Score" active={activeFilters.includes('High Score')} onClick={() => toggleFilter('High Score')} />
+          <FilterBadge label="Bullish Sentiment" active={activeFilters.includes('Bullish')} onClick={() => toggleFilter('Bullish')} />
+          <FilterBadge label="High ROI (>20%)" active={activeFilters.includes('High ROI')} onClick={() => toggleFilter('High ROI')} />
         </div>
         
         <div className="flex items-center gap-2 border border-dark-border rounded-md p-1 bg-dark-bg">
@@ -195,38 +230,29 @@ const TodayPage = () => {
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden mb-4">
-        <StockTable stocks={displayedStocks} loading={loading} />
-      </div>
-      
-      {/* Pagination Footer */}
-      {!loading && totalEntries > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
-          <div>
-            Showing <strong className="text-white">{startIndex + 1}</strong> to <strong className="text-white">{endIndex}</strong>
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              className="px-3 py-1 rounded bg-dark-card border border-dark-border hover:bg-dark-hover hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Previous
-            </button>
-            <span className="px-3">
-              Page {currentPage} / {totalPages}
-            </span>
-            <button 
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              className="px-3 py-1 rounded bg-dark-card border border-dark-border hover:bg-dark-hover hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Next
-            </button>
-          </div>
+      {/* Floating Compare Action Bar */}
+      {selectedTickers.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-primary text-white px-6 py-3 rounded-full shadow-lg shadow-primary/20 flex items-center gap-4 animate-in slide-in-from-bottom-5">
+          <span className="font-semibold text-sm">Đã chọn {selectedTickers.length} mã</span>
+          <div className="h-4 w-px bg-white/30"></div>
+          <button 
+            onClick={() => navigate(`/compare?tickers=${selectedTickers.join(',')}`)}
+            className="text-sm font-bold flex items-center gap-1 hover:text-dark-bg transition-colors"
+          >
+            So sánh ngay <ArrowRight size={16} />
+          </button>
         </div>
       )}
+
+      {/* Data Table */}
+      <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden mb-4">
+        <StockTable 
+          stocks={filteredStocks} 
+          loading={loading} 
+          selectedTickers={selectedTickers}
+          onToggleSelection={toggleSelection}
+        />
+      </div>
 
     </PageLayout>
   );
