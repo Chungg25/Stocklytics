@@ -8,7 +8,8 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
 
   if (!isOpen || !data) return null;
 
-  const { score, perspectives, synthesis, composite_stars } = data;
+  const { score, rating, decision, perspectives, composite_stars, _raw_synthesis, full_report_markdown } = data;
+  const synthesis = _raw_synthesis || {}; // Fallback in case it's missing
 
   const renderStars = (count) => {
     return Array.from({ length: 5 }).map((_, i) => (
@@ -26,6 +27,7 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
 
   const tabs = [
     { id: 'synthesis', label: 'Tổng kết (Synthesis)', icon: <BrainCircuit size={16} /> },
+    { id: 'full_report', label: 'Báo cáo chi tiết', icon: <Info size={16} /> },
     { id: 'duan', label: 'Duan Yongping', icon: <Target size={16} /> },
     { id: 'buffett', label: 'Warren Buffett', icon: <ShieldCheck size={16} /> },
     { id: 'munger', label: 'Charlie Munger', icon: <Scale size={16} /> },
@@ -74,16 +76,16 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
             <div className="mb-4 p-4 bg-dark-bg rounded-xl border border-dark-border text-center">
               <div className="text-xs text-text-muted uppercase font-bold tracking-wider mb-2">AI Rating</div>
               <div className={`text-2xl font-black mb-1 ${
-                score?.total_score >= 80 ? 'text-stock-green' : 
-                score?.total_score >= 50 ? 'text-yellow-400' : 'text-stock-red'
+                (score || 0) >= 80 ? 'text-stock-green' : 
+                (score || 0) >= 50 ? 'text-yellow-400' : 'text-stock-red'
               }`}>
-                {score?.total_score || '--'}/100
+                {score || '--'}/100
               </div>
               <div className="flex justify-center gap-1 mb-2">
                 {renderStars(composite_stars)}
               </div>
-              <div className={`inline-block px-3 py-1 rounded-md text-xs font-bold ${getDecisionColor(synthesis?.decision)}`}>
-                {synthesis?.decision || 'UNKNOWN'}
+              <div className={`inline-block px-3 py-1 rounded-md text-xs font-bold ${getDecisionColor(decision)}`}>
+                {decision || 'UNKNOWN'}
               </div>
             </div>
 
@@ -136,17 +138,30 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
               </div>
             )}
 
+            {/* Full Report Tab */}
+            {activeTab === 'full_report' && (
+              <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
+                <div className="p-8 rounded-2xl bg-dark-card border border-dark-border">
+                  <div className="prose prose-invert prose-p:text-text-secondary prose-h2:text-primary prose-h3:text-white max-w-none text-sm leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {full_report_markdown || "Báo cáo chi tiết đang được tạo..."}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Individual Master Tabs */}
             {['duan', 'buffett', 'munger', 'lilu'].includes(activeTab) && perspectives?.[activeTab] && (
               <div className="space-y-6 max-w-4xl mx-auto animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-white">{perspectives[activeTab].name}</h3>
+                  <h3 className="text-2xl font-bold text-white">{perspectives[activeTab].full_data?.name || activeTab}</h3>
                   <div className="flex gap-1">{renderStars(perspectives[activeTab].stars)}</div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Dynamic Fields based on Master */}
-                  {Object.entries(perspectives[activeTab]).map(([key, value]) => {
+                  {Object.entries(perspectives[activeTab].full_data || {}).map(([key, value]) => {
                     if (['name', 'stars', 'analysis'].includes(key)) return null;
                     if (typeof value === 'object') return null; // Skip arrays for now
                     return (
@@ -164,19 +179,19 @@ export default function AiAnalysisReport({ data, isOpen, onClose }) {
                   <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-3">Lập luận phân tích</h4>
                   <div className="prose prose-invert prose-p:text-text-secondary max-w-none text-sm leading-relaxed">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {perspectives[activeTab].analysis || ""}
+                      {perspectives[activeTab].full_data?.analysis || perspectives[activeTab].verdict || ""}
                     </ReactMarkdown>
                   </div>
                 </div>
                 
                 {/* Render special arrays like failure_scenarios for Munger */}
-                {perspectives[activeTab].failure_scenarios && (
+                {perspectives[activeTab].full_data?.failure_scenarios && (
                   <div className="p-6 rounded-2xl bg-stock-red/10 border border-stock-red/20">
                     <h4 className="text-sm font-bold text-stock-red uppercase tracking-wider mb-4 flex items-center gap-2">
                       <AlertTriangle size={16} /> Kịch bản rủi ro (Failure Scenarios)
                     </h4>
                     <div className="space-y-4">
-                      {perspectives[activeTab].failure_scenarios.map((scen, idx) => (
+                      {perspectives[activeTab].full_data.failure_scenarios.map((scen, idx) => (
                         <div key={idx} className="bg-dark-bg p-4 rounded-lg border border-dark-border">
                           <div className="flex justify-between items-start mb-2">
                             <span className="font-semibold text-white text-sm">{scen.scenario}</span>
