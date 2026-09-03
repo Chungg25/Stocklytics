@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2 } from 'lucide-react';
 import StockTable from '../components/screener/StockTable';
 import PageLayout from '../components/layout/PageLayout';
 
@@ -13,14 +12,78 @@ const FilterButton = ({ label, icon: Icon, rightIcon: RightIcon, active }) => (
   </button>
 );
 
-const FilterBadge = ({ label, active, onClick }) => (
-  <button 
-    onClick={onClick}
-    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
-      ${active ? 'bg-primary/20 text-primary border-primary/50' : 'bg-[#1A2234] text-text-primary hover:bg-[#252E42] border-[#2D3748]'}`}>
-    {label} {active ? <ChevronDown size={12}/> : <Plus size={12} className="text-text-muted" />}
-  </button>
-);
+const FilterInputBadge = ({ label, filterKey, currentFilter, onApply, onClear }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [minVal, setMinVal] = useState(currentFilter?.min || '');
+  const [maxVal, setMaxVal] = useState(currentFilter?.max || '');
+  const ref = useRef(null);
+  
+  const isActive = !!currentFilter;
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleApply = () => {
+    if (minVal === '' && maxVal === '') {
+      onClear(filterKey);
+    } else {
+      onApply(filterKey, { 
+        min: minVal !== '' ? Number(minVal) : null, 
+        max: maxVal !== '' ? Number(maxVal) : null 
+      });
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
+          ${isActive ? 'bg-primary/20 text-primary border-primary/50' : 'bg-[#1A2234] text-text-primary hover:bg-[#252E42] border-[#2D3748]'}`}>
+        {label} 
+        {isActive ? (
+           <span className="ml-1 bg-primary text-dark-bg px-1.5 py-0.5 rounded-full text-[10px]">
+             {currentFilter.min !== null ? `>${currentFilter.min}` : ''} 
+             {currentFilter.max !== null ? ` <${currentFilter.max}` : ''}
+           </span>
+        ) : <Plus size={12} className="text-text-muted" />}
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 w-48 bg-[#151C2C] border border-dark-border rounded-lg shadow-xl z-30 p-3">
+          <div className="text-xs font-semibold text-white mb-2">{label} Filter</div>
+          <div className="flex items-center gap-2 mb-3">
+            <input 
+              type="number" 
+              placeholder="Min" 
+              value={minVal} 
+              onChange={e => setMinVal(e.target.value)}
+              className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-primary"
+            />
+            <span className="text-text-muted">-</span>
+            <input 
+              type="number" 
+              placeholder="Max" 
+              value={maxVal} 
+              onChange={e => setMaxVal(e.target.value)}
+              className="w-full bg-dark-bg border border-dark-border rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => { setMinVal(''); setMaxVal(''); onClear(filterKey); setIsOpen(false); }} className="flex-1 py-1.5 text-xs bg-dark-bg border border-dark-border rounded text-text-muted hover:text-white">Clear</button>
+            <button onClick={handleApply} className="flex-1 py-1.5 text-xs bg-primary text-dark-bg rounded font-semibold hover:bg-primary/90">Apply</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const parseMarketCap = (str) => {
   if (typeof str !== 'string' || !str || str === 'N/A') return 0;
@@ -32,7 +95,6 @@ const parseMarketCap = (str) => {
 };
 
 const TodayPage = () => {
-  const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -43,11 +105,8 @@ const TodayPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   
-  // Quick Filters State
-  const [activeFilters, setActiveFilters] = useState([]);
-  
-  // Selection State
-  const [selectedTickers, setSelectedTickers] = useState([]);
+  // Parametric Filters State (e.g. { price: {min: 10, max: 100}, change: {min: 5, max: null} })
+  const [activeFilters, setActiveFilters] = useState({});
   
   const dropdownRef = useRef(null);
 
@@ -105,16 +164,16 @@ const TodayPage = () => {
     }
   };
 
-  const toggleFilter = (filterKey) => {
-    setActiveFilters(prev => 
-      prev.includes(filterKey) ? prev.filter(f => f !== filterKey) : [...prev, filterKey]
-    );
+  const applyFilter = (key, bounds) => {
+    setActiveFilters(prev => ({ ...prev, [key]: bounds }));
   };
 
-  const toggleSelection = (ticker) => {
-    setSelectedTickers(prev => 
-      prev.includes(ticker) ? prev.filter(t => t !== ticker) : [...prev, ticker]
-    );
+  const clearFilter = (key) => {
+    setActiveFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[key];
+      return newFilters;
+    });
   };
 
   const filteredStocks = useMemo(() => {
@@ -134,22 +193,21 @@ const TodayPage = () => {
       );
     }
     
-    // 3. Quick Badges Filter
-    if (activeFilters.includes('Gainers')) {
-      result = result.filter(s => s.change > 0);
-    }
-    if (activeFilters.includes('Mega Cap')) {
-      result = result.filter(s => parseMarketCap(s.marketCap) > 200e9); // > 200B
-    }
-    if (activeFilters.includes('High Score')) {
-      result = result.filter(s => s.score >= 60);
-    }
-    if (activeFilters.includes('Bullish')) {
-      result = result.filter(s => s.sentiment === 'Bullish');
-    }
-    if (activeFilters.includes('High ROI')) {
-      result = result.filter(s => s.roi1y >= 20);
-    }
+    // 3. Parametric Filters
+    Object.entries(activeFilters).forEach(([key, bounds]) => {
+      result = result.filter(s => {
+        let val = 0;
+        if (key === 'price') val = s.price;
+        if (key === 'change') val = s.change;
+        if (key === 'marketCap') val = parseMarketCap(s.marketCap);
+        if (key === 'score') val = s.score;
+        if (key === 'roi1y') val = s.roi1y;
+        
+        if (bounds.min !== null && val < bounds.min) return false;
+        if (bounds.max !== null && val > bounds.max) return false;
+        return true;
+      });
+    });
 
     return result;
   }, [stocks, selectedSector, searchQuery, activeFilters]);
@@ -217,11 +275,11 @@ const TodayPage = () => {
           
           <div className="h-6 w-px bg-dark-border mx-1 hidden sm:block"></div>
           
-          <FilterBadge label="Gainers" active={activeFilters.includes('Gainers')} onClick={() => toggleFilter('Gainers')} />
-          <FilterBadge label="Mega Cap (>200B)" active={activeFilters.includes('Mega Cap')} onClick={() => toggleFilter('Mega Cap')} />
-          <FilterBadge label="High Score" active={activeFilters.includes('High Score')} onClick={() => toggleFilter('High Score')} />
-          <FilterBadge label="Bullish Sentiment" active={activeFilters.includes('Bullish')} onClick={() => toggleFilter('Bullish')} />
-          <FilterBadge label="High ROI (>20%)" active={activeFilters.includes('High ROI')} onClick={() => toggleFilter('High ROI')} />
+          <FilterInputBadge label="Price ($)" filterKey="price" currentFilter={activeFilters.price} onApply={applyFilter} onClear={clearFilter} />
+          <FilterInputBadge label="Price Change (%)" filterKey="change" currentFilter={activeFilters.change} onApply={applyFilter} onClear={clearFilter} />
+          <FilterInputBadge label="Market Cap" filterKey="marketCap" currentFilter={activeFilters.marketCap} onApply={applyFilter} onClear={clearFilter} />
+          <FilterInputBadge label="Score" filterKey="score" currentFilter={activeFilters.score} onApply={applyFilter} onClear={clearFilter} />
+          <FilterInputBadge label="ROI% 1Y" filterKey="roi1y" currentFilter={activeFilters.roi1y} onApply={applyFilter} onClear={clearFilter} />
         </div>
         
         <div className="flex items-center gap-2 border border-dark-border rounded-md p-1 bg-dark-bg">
@@ -230,27 +288,11 @@ const TodayPage = () => {
         </div>
       </div>
 
-      {/* Floating Compare Action Bar */}
-      {selectedTickers.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-primary text-white px-6 py-3 rounded-full shadow-lg shadow-primary/20 flex items-center gap-4 animate-in slide-in-from-bottom-5">
-          <span className="font-semibold text-sm">Đã chọn {selectedTickers.length} mã</span>
-          <div className="h-4 w-px bg-white/30"></div>
-          <button 
-            onClick={() => navigate(`/compare?tickers=${selectedTickers.join(',')}`)}
-            className="text-sm font-bold flex items-center gap-1 hover:text-dark-bg transition-colors"
-          >
-            So sánh ngay <ArrowRight size={16} />
-          </button>
-        </div>
-      )}
-
       {/* Data Table */}
       <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden mb-4">
         <StockTable 
           stocks={filteredStocks} 
           loading={loading} 
-          selectedTickers={selectedTickers}
-          onToggleSelection={toggleSelection}
         />
       </div>
 
