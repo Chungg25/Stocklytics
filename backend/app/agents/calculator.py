@@ -24,52 +24,214 @@ def _pct(val) -> Optional[float]:
     return round(float(val) * 100, 2)
 
 
-def _calc_dcf(fcf: float, growth_rate: float, discount_rate: float,
-              terminal_growth: float, shares: float, years: int = 10) -> dict:
-    if not all([fcf, shares]) or fcf <= 0 or shares <= 0:
-        return {"error": "Insufficient data for DCF"}
+SECTOR_TERMINAL_GROWTH = {
+    "Technology": 0.04,
+    "Communication Services": 0.035,
+    "Healthcare": 0.035,
+    "Consumer Cyclical": 0.03,
+    "Consumer Defensive": 0.025,
+    "Financial Services": 0.025,
+    "Industrials": 0.025,
+    "Basic Materials": 0.02,
+    "Energy": 0.02,
+    "Utilities": 0.02,
+    "Real Estate": 0.025,
+}
 
+RISK_FREE_RATE = 0.043
+EQUITY_RISK_PREMIUM = 0.055
+
+
+def _calc_dcf_single(cash_flow: float, growth_rate: float, discount_rate: float,
+                     terminal_growth: float, shares: float, total_debt: float = 0,
+                     total_cash: float = 0, years: int = 10) -> dict:
     g = min(growth_rate or 0.05, 0.30)
     r = max(discount_rate or 0.10, 0.06)
     tg = min(terminal_growth or 0.03, r - 0.02)
 
-    projected_fcfs = []
-    current_fcf = fcf
+    projected = []
+    cf = cash_flow
     for yr in range(1, years + 1):
         effective_g = g * (1 - (yr - 1) / (years * 2))
-        current_fcf *= (1 + effective_g)
-        projected_fcfs.append(current_fcf)
+        cf *= (1 + effective_g)
+        projected.append(cf)
 
-    pv_fcfs = sum(cf / (1 + r) ** i for i, cf in enumerate(projected_fcfs, 1))
+    pv_cfs = sum(c / (1 + r) ** i for i, c in enumerate(projected, 1))
+    tv = projected[-1] * (1 + tg) / (r - tg)
+    pv_tv = tv / (1 + r) ** years
 
-    terminal_value = projected_fcfs[-1] * (1 + tg) / (r - tg)
-    pv_terminal = terminal_value / (1 + r) ** years
-
-    enterprise_value = pv_fcfs + pv_terminal
-    fair_value_per_share = round(float(enterprise_value / shares), 2)
+    enterprise_value = pv_cfs + pv_tv
+    equity_value = enterprise_value - (total_debt or 0) + (total_cash or 0)
+    fair_value = round(max(float(equity_value / shares), 0), 2)
 
     return {
-        "fair_value": fair_value_per_share,
+        "fair_value": fair_value,
         "enterprise_value": round(float(enterprise_value), 0),
-        "pv_fcfs": round(float(pv_fcfs), 0),
-        "pv_terminal": round(float(pv_terminal), 0),
+        "pv_cfs": round(float(pv_cfs), 0),
+        "pv_terminal": round(float(pv_tv), 0),
         "wacc": round(r, 4),
         "growth_rate": round(g, 4),
         "terminal_growth": round(tg, 4),
-        "years": years,
     }
 
 
-def _calc_wacc(market_cap: float, total_debt: float, cost_of_equity: float = 0.10,
-               cost_of_debt: float = 0.05, tax_rate: float = 0.21) -> float:
+def _calc_dcf(data: dict) -> dict:
+    f = data.get("fundamentals", {})
+    p = data.get("price", {})
+    sector = data.get("company", {}).get("sector", "")
+
+    shares = f.get("shares_outstanding") or 0
+    if shares <= 0:
+        return {"error": "No shares outstanding data"}
+
+    market_cap = p.get("market_cap") or 0
+    total_debt = f.get("total_debt") or 0
+    total_cash = f.get("total_cash") or 0
+    beta = p.get("beta") or 1.0
+
+    wacc = _calc_wacc(data)
+    growth = f.get("revenue_growth") or 0.05
+    tg = SECTOR_TERMINAL_GROWTH.get(sector, 0.03)
+
+    # Determine cash flow: FCF > Operating CF > EBITDA-based > Earnings-based
+    fcf = f.get("free_cash_flow") or 0
+    cf_source = "fcf"
+    cash_flow = fcf
+
+    if cash_flow <= 0:
+        ocf = f.get("operating_cash_flow") or 0
+        if ocf > 0:
+            cash_flow = ocf
+            cf_source = "operating_cf"
+
+    if cash_flow <= 0:
+        ebitda = f.get("ebitda") or 0
+        if ebitda > 0:
+            cash_flow = ebitda * 0.70
+            cf_source = "ebitda_proxy"
+
+    if cash_flow <= 0:
+        eps = f.get("eps_trailing") or 0
+        if eps > 0 and shares > 0:
+            cash_flow = eps * shares
+            cf_source = "earnings_proxy"
+
+    if cash_flow <= 0:
+        return {"error": "No positive cash flow metric available for DCF"}
+
+    # Base scenario
+    base = _calc_dcf_single(cash_flow, growth, wacc, tg, shares, total_debt, total_cash)
+
+    # Conservative: WACC +1.5%, growth -30%
+    conservative = _calc_dcf_single(
+        cash_flow, growth * 0.70, wacc + 0.015, tg, shares, total_debt, total_cash
+    )
+
+    # Optimistic: WACC -1%, growth +20%
+    optimistic = _calc_dcf_single(
+        cash_flow, min(growth * 1.20, 0.35), max(wacc - 0.01, 0.05), tg, shares, total_debt, total_cash
+    )
+
+    return {
+        "fair_value": base["fair_value"],
+        "enterprise_value": base["enterprise_value"],
+        "pv_cfs": base["pv_cfs"],
+        "pv_terminal": base["pv_terminal"],
+        "wacc": base["wacc"],
+        "growth_rate": base["growth_rate"],
+        "terminal_growth": base["terminal_growth"],
+        "cf_source": cf_source,
+        "scenarios": {
+            "conservative": {"fair_value": conservative["fair_value"], "wacc": conservative["wacc"], "growth": conservative["growth_rate"]},
+            "base": {"fair_value": base["fair_value"], "wacc": base["wacc"], "growth": base["growth_rate"]},
+            "optimistic": {"fair_value": optimistic["fair_value"], "wacc": optimistic["wacc"], "growth": optimistic["growth_rate"]},
+        },
+        "years": 10,
+    }
+
+
+def _calc_wacc(data: dict) -> float:
+    f = data.get("fundamentals", {})
+    p = data.get("price", {})
+
+    market_cap = p.get("market_cap") or 0
+    total_debt = f.get("total_debt") or 0
+    beta = p.get("beta") or 1.0
+
     if not market_cap:
         return 0.10
-    total = market_cap + (total_debt or 0)
+
+    # Cost of equity via CAPM
+    cost_of_equity = RISK_FREE_RATE + max(beta, 0.5) * EQUITY_RISK_PREMIUM
+
+    # Cost of debt from interest expense
+    interest_expense = f.get("interest_expense")
+    if interest_expense and total_debt and total_debt > 0:
+        cost_of_debt = min(interest_expense / total_debt, 0.15)
+    else:
+        cost_of_debt = RISK_FREE_RATE + 0.015
+
+    # Effective tax rate
+    tax_rate = f.get("effective_tax_rate")
+    if tax_rate is None or tax_rate < 0 or tax_rate > 0.50:
+        tax_rate = 0.21
+
+    total = market_cap + total_debt
     if total <= 0:
-        return 0.10
+        return cost_of_equity
+
     e_weight = market_cap / total
-    d_weight = (total_debt or 0) / total
-    return e_weight * cost_of_equity + d_weight * cost_of_debt * (1 - tax_rate)
+    d_weight = total_debt / total
+    return round(e_weight * cost_of_equity + d_weight * cost_of_debt * (1 - tax_rate), 4)
+
+
+def _calc_multiples_valuation(data: dict) -> dict:
+    f = data.get("fundamentals", {})
+    p = data.get("price", {})
+    price = p.get("current") or 0
+
+    result = {}
+
+    # P/E-based implied price (using forward EPS × sector median P/E)
+    eps_f = f.get("eps_forward")
+    pe_f = f.get("pe_forward")
+    if eps_f and eps_f > 0:
+        sector_pe = pe_f if pe_f and 5 < pe_f < 100 else 20
+        implied_pe = round(eps_f * sector_pe, 2)
+        result["pe_implied"] = {
+            "price": implied_pe,
+            "method": f"Forward EPS ${eps_f:.2f} × P/E {sector_pe:.1f}x",
+            "upside_pct": round((implied_pe - price) / price * 100, 1) if price else None,
+        }
+
+    # EV/EBITDA-based implied price
+    ebitda = f.get("ebitda")
+    ev_ebitda = f.get("ev_to_ebitda")
+    shares = f.get("shares_outstanding")
+    total_debt = f.get("total_debt") or 0
+    total_cash = f.get("total_cash") or 0
+    if ebitda and ebitda > 0 and ev_ebitda and shares and shares > 0:
+        implied_ev = ebitda * ev_ebitda
+        implied_equity = implied_ev - total_debt + total_cash
+        implied_price = round(max(implied_equity / shares, 0), 2)
+        result["ev_ebitda_implied"] = {
+            "price": implied_price,
+            "method": f"EBITDA × {ev_ebitda:.1f}x",
+            "upside_pct": round((implied_price - price) / price * 100, 1) if price else None,
+        }
+
+    # P/S-based implied price
+    ps = f.get("price_to_sales")
+    revenue = f.get("revenue_ttm")
+    if ps and revenue and revenue > 0 and shares and shares > 0:
+        implied_ps = round(revenue * ps / shares, 2)
+        result["ps_implied"] = {
+            "price": implied_ps,
+            "method": f"Revenue/share × P/S {ps:.1f}x",
+            "upside_pct": round((implied_ps - price) / price * 100, 1) if price else None,
+        }
+
+    return result
 
 
 def _calc_piotroski(data: dict) -> dict:
@@ -315,15 +477,8 @@ def calculate(data: dict) -> dict:
     f = data.get("fundamentals", {})
     p = data.get("price", {})
 
-    # --- DCF ---
-    fcf = f.get("free_cash_flow") or 0
-    shares = f.get("shares_outstanding") or 0
-    market_cap = p.get("market_cap") or 0
-    total_debt = f.get("total_debt") or 0
-
-    wacc = _calc_wacc(market_cap, total_debt)
-    growth = f.get("revenue_growth") or 0.05
-    dcf = _calc_dcf(fcf, growth, wacc, 0.03, shares)
+    # --- DCF (CAPM WACC, sector terminal growth, FCF fallback, 3 scenarios) ---
+    dcf = _calc_dcf(data)
 
     # --- Multiples ---
     multiples = {
@@ -335,6 +490,9 @@ def calculate(data: dict) -> dict:
         "price_to_sales": f.get("price_to_sales"),
         "peg_ratio": f.get("peg_ratio"),
     }
+
+    # --- Multiples-based valuation (implied prices) ---
+    multiples_valuation = _calc_multiples_valuation(data)
 
     # --- Quality ---
     piotroski = _calc_piotroski(data)
@@ -356,10 +514,15 @@ def calculate(data: dict) -> dict:
         "current_ratio": f.get("current_ratio"),
     }
 
+    # --- Historical performance ---
+    history = data.get("history_1y", [])
+    historical = _calc_historical_performance(history)
+
     return {
         "ticker": data.get("ticker"),
         "dcf": dcf,
         "multiples": multiples,
+        "multiples_valuation": multiples_valuation,
         "quality": {
             "piotroski": piotroski,
             "altman_z": altman,
@@ -367,4 +530,33 @@ def calculate(data: dict) -> dict:
         "technical": technical,
         "growth": growth_metrics,
         "risk": risk,
+        "historical": historical,
+    }
+
+
+def _calc_historical_performance(history: list) -> dict:
+    if len(history) < 20:
+        return {}
+
+    closes = np.array([h["close"] for h in history], dtype=float)
+    returns = np.diff(closes) / closes[:-1]
+
+    total_return = round((closes[-1] / closes[0] - 1) * 100, 2)
+
+    # Max drawdown
+    cummax = np.maximum.accumulate(closes)
+    drawdowns = (closes - cummax) / cummax
+    max_drawdown = round(float(np.min(drawdowns)) * 100, 2)
+
+    # Annualized return and volatility
+    trading_days = len(returns)
+    ann_return = round(float(np.mean(returns) * 252) * 100, 2)
+    ann_vol = round(float(np.std(returns) * np.sqrt(252)) * 100, 2)
+
+    return {
+        "total_return_pct": total_return,
+        "max_drawdown_pct": max_drawdown,
+        "annualized_return_pct": ann_return,
+        "annualized_volatility_pct": ann_vol,
+        "trading_days": trading_days,
     }

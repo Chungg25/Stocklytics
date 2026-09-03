@@ -96,3 +96,24 @@ def score_stock(ticker: str) -> Dict[str, Any]:
 def full_stock_analysis(ticker: str) -> Dict[str, Any]:
     from app.agents.orchestrator import analyze_stock
     return analyze_stock(ticker, save=False)
+
+
+@tool(
+    name="compare_stocks",
+    description="Compare 2-5 stocks side by side with rankings, anomaly detection, correlation matrix, historical performance, and normalized chart data. Pass a single ticker to auto-find industry peers. AI picks 'best for' growth, value, risk/reward, and diversification.",
+    parameters={
+        "type": "object",
+        "properties": {
+            "tickers": {
+                "type": "string",
+                "description": "Comma-separated ticker symbols (e.g., 'NVDA,AMD,AVGO'). Single ticker auto-finds peers."
+            }
+        },
+        "required": ["tickers"]
+    }
+)
+def compare_stocks(tickers: str) -> Dict[str, Any]:
+    from app.agents.comparator import compare
+    ticker_list = [t.strip() for t in tickers.split(",") if t.strip()]
+    auto_peers = len(ticker_list) == 1
+    return compare(ticker_list, auto_peers=auto_peers)
