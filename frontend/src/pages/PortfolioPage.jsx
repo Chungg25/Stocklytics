@@ -197,68 +197,10 @@ export default function PortfolioPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6 max-w-5xl mx-auto">
           
-          {/* Left Column: Watchlist & Groups */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-dark-card border border-dark-border rounded-lg p-5">
-              <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                <Eye size={18} className="text-pink-400" /> Watchlist Groups
-              </h2>
-              
-              <div className="space-y-2 mb-6">
-                <input 
-                  type="text" 
-                  placeholder="Mã (VD: AAPL)..." 
-                  value={newTicker}
-                  onChange={e => setNewTicker(e.target.value)}
-                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary"
-                />
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="Nhóm (Mặc định: Default)..." 
-                    value={newGroup}
-                    onChange={e => setNewGroup(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleAddTicker()}
-                    className="flex-1 px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary"
-                  />
-                  <button onClick={handleAddTicker} className="px-3 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary-hover text-sm">
-                    Thêm
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {Object.keys(groupedWatchlist).length === 0 ? (
-                  <div className="text-text-secondary text-sm italic">Chưa có mã theo dõi.</div>
-                ) : (
-                  Object.keys(groupedWatchlist).map(group => (
-                    <div key={group} className="border border-dark-border rounded-lg overflow-hidden">
-                      <div className="bg-dark-hover px-3 py-2 text-sm font-bold text-white border-b border-dark-border flex justify-between">
-                        {group}
-                        <span className="text-text-muted">{groupedWatchlist[group].length} mã</span>
-                      </div>
-                      <div className="p-2 space-y-2">
-                        {groupedWatchlist[group].map(w => (
-                          <div key={w.id} className="flex items-center justify-between p-2 bg-dark-bg rounded border border-transparent hover:border-dark-border group">
-                            <span className="font-bold text-white text-sm">{w.ticker}</span>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => openTradeModal(w.ticker, 'BUY')} className="text-xs px-2 py-1 bg-stock-green/20 text-stock-green rounded hover:bg-stock-green hover:text-dark-bg">Mua</button>
-                              <button onClick={() => handleRemoveTicker(w.id)} className="text-text-muted hover:text-stock-red">&times;</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Portfolio & Trades */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Portfolio & Trades */}
+          <div className="space-y-6">
             
             {/* Positions */}
             <div className="bg-dark-card border border-dark-border rounded-lg p-5">

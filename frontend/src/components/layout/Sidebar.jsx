@@ -8,7 +8,7 @@ import {
 const navItems = [
   { icon: LayoutGrid, label: 'TODAY', id: 'today', path: '/today' },
   { icon: Briefcase, label: 'PORTFOLIO', id: 'portfolio', path: '/portfolio' },
-  { icon: Eye, label: 'WATCHLIST', id: 'watchlist', path: '/portfolio' },
+  { icon: Eye, label: 'WATCHLIST', id: 'watchlist', path: '/watchlist' },
   { icon: Filter, label: 'SCREENERS', id: 'screeners', path: '/screeners' },
   { icon: List, label: 'COMPARE', id: 'compare', path: '/compare' },
   { icon: TrendingUp, label: 'CHART', id: 'chart', path: '/chart' },

@@ -9,6 +9,7 @@ import TodayPage from './pages/TodayPage'
 import ComparePage from './pages/ComparePage'
 import TradingViewPage from './pages/TradingViewPage'
 import PortfolioPage from './pages/PortfolioPage'
+import WatchlistPage from './pages/WatchlistPage'
 import StockDetailPage from './pages/StockDetailPage'
 
 import { AgentProvider } from './contexts/AgentContext'
@@ -27,6 +28,7 @@ function App() {
             <Route path="/compare" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
             <Route path="/chart" element={<TradingViewPage />} />
             <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
+            <Route path="/watchlist" element={<ProtectedRoute><WatchlistPage /></ProtectedRoute>} />
             <Route path="/stock/:ticker" element={<StockDetailPage />} />
             {/* Fallback */}
             <Route path="*" element={<TodayPage />} />
