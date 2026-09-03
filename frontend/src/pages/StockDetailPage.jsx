@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageLayout from '../components/layout/PageLayout';
-import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink, BrainCircuit, Loader2 } from 'lucide-react';
 import StockChartPanel from '../components/stock-detail/StockChartPanel';
 import StockSidebar from '../components/stock-detail/StockSidebar';
+import AiAnalysisReport from '../components/stock-detail/AiAnalysisReport';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 export default function StockDetailPage() {
   const { ticker: paramTicker } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [ticker, setTicker] = useState(paramTicker?.toUpperCase() || 'AAPL');
   const [stockInfo, setStockInfo] = useState(null);
+  
+  // AI Analysis State
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisData, setAnalysisData] = useState(null);
+  const [showReport, setShowReport] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/api/stocks`)
@@ -23,7 +31,42 @@ export default function StockDetailPage() {
         }
       })
       .catch(console.error);
+      
+    // Reset AI state on ticker change
+    setAnalysisData(null);
+    setShowReport(false);
   }, [ticker]);
+
+  const runAiAnalysis = async () => {
+    if (analysisData) {
+      setShowReport(true);
+      return;
+    }
+    
+    setIsAnalyzing(true);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (user) headers['x-user-id'] = user.id;
+
+      const res = await fetch(`${API_URL}/api/analysis/analyze`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ticker })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setAnalysisData(data.data);
+        setShowReport(true);
+      } else {
+        alert("Lỗi phân tích: " + (data.detail || data.message));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Đã xảy ra lỗi khi gọi AI Analysis.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const changePercent = stockInfo ? stockInfo.change_percent : 0;
   const isPositive = changePercent >= 0;
@@ -49,6 +92,27 @@ export default function StockDetailPage() {
                     {stockInfo.company}
                   </span>
                 )}
+                
+                {/* AI Analysis Button */}
+                <button
+                  onClick={runAiAnalysis}
+                  disabled={isAnalyzing}
+                  className={`ml-4 px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-bold transition-all shadow-sm ${
+                    isAnalyzing 
+                      ? 'bg-dark-bg border border-dark-border text-text-muted cursor-wait' 
+                      : analysisData 
+                        ? 'bg-primary/20 border border-primary/40 text-primary hover:bg-primary/30'
+                        : 'bg-gradient-to-r from-primary to-purple-500 hover:from-primary-hover hover:to-purple-600 text-white border border-transparent shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]'
+                  }`}
+                >
+                  {isAnalyzing ? (
+                    <><Loader2 size={16} className="animate-spin" /> Đang phân tích...</>
+                  ) : analysisData ? (
+                    <><BrainCircuit size={16} /> Xem báo cáo AI</>
+                  ) : (
+                    <><BrainCircuit size={16} /> AI Phân tích (4 Masters)</>
+                  )}
+                </button>
               </div>
               <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
                 NASDAQ <span className="w-1 h-1 rounded-full bg-text-muted"></span> IT Services
@@ -84,6 +148,12 @@ export default function StockDetailPage() {
           
         </div>
       </div>
+
+      <AiAnalysisReport 
+        isOpen={showReport} 
+        onClose={() => setShowReport(false)} 
+        data={analysisData} 
+      />
     </PageLayout>
   );
 }
