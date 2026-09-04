@@ -170,7 +170,9 @@ const AISuggestionModal = ({ isOpen, onClose, data }) => {
                     </div>
                     <div>
                       <p className="text-[10px] text-text-muted uppercase">Target</p>
-                      <p className="text-sm font-mono text-stock-green">${pick.target_price || 'N/A'}</p>
+                      <p className={`text-sm font-mono ${pick.expected_return_pct > 0 ? 'text-stock-green' : pick.expected_return_pct < 0 ? 'text-stock-red' : 'text-white'}`}>
+                        ${pick.target_price || 'N/A'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-[10px] text-text-muted uppercase">Stop</p>
@@ -178,7 +180,9 @@ const AISuggestionModal = ({ isOpen, onClose, data }) => {
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] text-text-muted uppercase">Upside</p>
-                      <p className="text-sm font-bold text-stock-green">{pick.expected_return_pct > 0 ? '+' : ''}{pick.expected_return_pct || 0}%</p>
+                      <p className={`text-sm font-bold ${pick.expected_return_pct > 0 ? 'text-stock-green' : pick.expected_return_pct < 0 ? 'text-stock-red' : 'text-text-muted'}`}>
+                        {pick.expected_return_pct > 0 ? '+' : ''}{pick.expected_return_pct || 0}%
+                      </p>
                     </div>
                   </div>
                 </div>
