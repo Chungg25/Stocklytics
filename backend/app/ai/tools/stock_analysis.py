@@ -99,6 +99,33 @@ def full_stock_analysis(ticker: str) -> Dict[str, Any]:
 
 
 @tool(
+    name="suggest_stocks",
+    description="Screen the ~130-stock universe with preset filters (quality_growth, value, growth, momentum, dividend_safety) and return top stock picks with AI-generated thesis, entry/stop-loss/target prices, portfolio allocation, and diversification analysis. Optionally filter by theme (ai, cloud, energy, dividend, etc.).",
+    parameters={
+        "type": "object",
+        "properties": {
+            "screen": {
+                "type": "string",
+                "description": "Screening preset: quality_growth, value, growth, momentum, dividend_safety (default: quality_growth)"
+            },
+            "theme": {
+                "type": "string",
+                "description": "Optional thematic filter: ai, cloud, cybersecurity, ev, healthcare_innovation, energy, dividend, fintech"
+            },
+            "max_picks": {
+                "type": "integer",
+                "description": "Maximum picks to return (1-15, default 8)"
+            }
+        },
+        "required": []
+    }
+)
+def suggest_stocks(screen: str = "quality_growth", theme: str = None, max_picks: int = 8) -> Dict[str, Any]:
+    from app.agents.suggester import suggest
+    return suggest(screen=screen, theme=theme, max_picks=max_picks)
+
+
+@tool(
     name="compare_stocks",
     description="Compare 2-5 stocks side by side with rankings, anomaly detection, correlation matrix, historical performance, and normalized chart data. Pass a single ticker to auto-find industry peers. AI picks 'best for' growth, value, risk/reward, and diversification.",
     parameters={

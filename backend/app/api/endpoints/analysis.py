@@ -22,6 +22,12 @@ class CompareRequest(BaseModel):
     auto_peers: bool = False
 
 
+class SuggestRequest(BaseModel):
+    screen: str = "quality_growth"
+    theme: Optional[str] = None
+    max_picks: int = 8
+
+
 @router.post("/analyze")
 def run_full_analysis(req: AnalyzeRequest, x_user_id: Optional[str] = Header(None)):
     try:
@@ -62,6 +68,28 @@ def run_quick_score(req: QuickScoreRequest):
                 "breakdown": score_result.get("breakdown", {}),
             }
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/suggest")
+def run_suggestion(req: SuggestRequest):
+    try:
+        from app.agents.suggester import suggest
+
+        if req.max_picks < 1 or req.max_picks > 15:
+            raise HTTPException(status_code=400, detail="max_picks phải từ 1-15")
+
+        result = suggest(
+            screen=req.screen,
+            theme=req.theme,
+            max_picks=req.max_picks,
+        )
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        return {"status": "success", "data": result}
     except HTTPException:
         raise
     except Exception as e:
