@@ -99,11 +99,11 @@ class ChatAgent:
             except Exception as e:
                 error_msg = str(e)
                 if "413" in error_msg or "rate limit" in error_msg.lower():
-                    friendly_error = "Hệ thống AI đang quá tải khối lượng dữ liệu (Rate Limit). Vui lòng thu hẹp phạm vi câu hỏi hoặc đợi 1 phút rồi thử lại."
+                    friendly_error = "AI system is overloaded (Rate Limit). Please narrow down your question or wait a minute and try again."
                 elif "402" in error_msg:
-                    friendly_error = "Tài khoản API Key đã hết hạn mức (No Credit). Vui lòng nạp thêm để tiếp tục."
+                    friendly_error = "API Key quota exceeded (No Credit). Please top up to continue."
                 else:
-                    friendly_error = f"Lỗi hệ thống: {error_msg}"
+                    friendly_error = f"System error: {error_msg}"
                 yield f"\n\n__ERROR__:{friendly_error}\n\n"
                 break
 

@@ -102,11 +102,11 @@ def run_comparison(req: CompareRequest):
         from app.agents.comparator import compare
 
         if len(req.tickers) < 1:
-            raise HTTPException(status_code=400, detail="Cần ít nhất 1 mã")
+            raise HTTPException(status_code=400, detail="At least 1 ticker is required")
         if not req.auto_peers and len(req.tickers) < 2:
-            raise HTTPException(status_code=400, detail="Cần ít nhất 2 mã để so sánh, hoặc bật auto_peers")
+            raise HTTPException(status_code=400, detail="At least 2 tickers are required for comparison, or enable auto_peers")
         if len(req.tickers) > 5:
-            raise HTTPException(status_code=400, detail="Tối đa 5 mã")
+            raise HTTPException(status_code=400, detail="Maximum 5 tickers allowed")
 
         result = compare(req.tickers, auto_peers=req.auto_peers)
         if "error" in result:

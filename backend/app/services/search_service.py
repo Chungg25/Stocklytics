@@ -11,7 +11,7 @@ def get_latest_news(ticker: str, max_results: int = 3) -> str:
     try:
         results = DDGS().news(f"{ticker} stock news OR economy", max_results=max_results)
         if not results:
-            return "Không tìm thấy tin tức nào đáng chú ý trong 24h qua."
+            return "No notable news found in the last 24 hours."
             
         news_text = f"--- CẬP NHẬT TIN TỨC THỜI GIAN THỰC (Lấy lúc {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---\n\n"
         for i, article in enumerate(results):
@@ -39,7 +39,7 @@ def get_latest_news(ticker: str, max_results: int = 3) -> str:
             
         return news_text
     except Exception as e:
-        return f"Không thể lấy được tin tức do lỗi mạng hoặc API: {str(e)}"
+        return f"Could not fetch news due to network or API error: {str(e)}"
 
 def get_fundamental_data(ticker: str) -> str:
     """Sử dụng yfinance để lấy báo cáo tài chính và dữ liệu cơ bản."""
@@ -48,9 +48,9 @@ def get_fundamental_data(ticker: str) -> str:
         info = stock.info
         
         # Trích xuất các chỉ số cốt lõi
-        summary = info.get("longBusinessSummary", "Không có thông tin mô hình kinh doanh")
-        industry = info.get("industry", "Không rõ")
-        sector = info.get("sector", "Không rõ")
+        summary = info.get("longBusinessSummary", "No business summary available")
+        industry = info.get("industry", "Unknown")
+        sector = info.get("sector", "Unknown")
         
         trailing_pe = info.get("trailingPE", "N/A")
         forward_pe = info.get("forwardPE", "N/A")
@@ -91,7 +91,7 @@ def get_fundamental_data(ticker: str) -> str:
         )
         return result
     except Exception as e:
-        return f"Lỗi khi lấy dữ liệu cơ bản: {e}"
+        return f"Error fetching fundamental data: {e}"
 
 def get_technical_indicators(ticker: str) -> str:
     """
@@ -102,7 +102,7 @@ def get_technical_indicators(ticker: str) -> str:
         # Lấy dữ liệu 1 năm
         hist = yf.Ticker(ticker).history(period="1y")
         if hist.empty:
-            return "Không có dữ liệu lịch sử để tính toán chỉ báo."
+            return "No historical data to calculate technical indicators."
             
         current_price = hist['Close'].iloc[-1]
         
@@ -134,4 +134,4 @@ def get_technical_indicators(ticker: str) -> str:
         )
         return ta_text
     except Exception as e:
-        return f"Lỗi tính toán TA: {str(e)}"
+        return f"Error calculating technical indicators: {str(e)}"

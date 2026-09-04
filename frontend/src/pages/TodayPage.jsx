@@ -318,7 +318,7 @@ const TodayPage = () => {
                 handleSuggest(screen, theme);
               }
             }}
-            placeholder="Hỏi AI (VD: Tóm tắt danh mục siêu cổ phiếu Công nghệ...)" 
+            placeholder="Ask AI (e.g., Build a Tech stock portfolio...)" 
             className="w-full bg-[#0D111A] border border-dark-border rounded-xl py-3 pl-12 pr-12 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all shadow-inner"
           />
           {isLoadingSuggest && (
@@ -327,12 +327,12 @@ const TodayPage = () => {
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-text-muted mr-2 font-medium">Gợi ý nhanh:</span>
+          <span className="text-xs text-text-muted mr-2 font-medium">Quick Suggestions:</span>
           <button onClick={() => handleSuggest('quality_growth')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors border border-primary/20">
-            <Trophy size={14} /> Tóm tắt Quality Growth
+            <Trophy size={14} /> Quality Growth
           </button>
           <button onClick={() => handleSuggest('growth', 'ai')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#8b5cf6]/10 text-[#8b5cf6] text-xs font-semibold hover:bg-[#8b5cf6]/20 transition-colors border border-[#8b5cf6]/20">
-            <Cpu size={14} /> Danh mục Tech & AI
+            <Cpu size={14} /> Tech & AI Portfolio
           </button>
           <button onClick={() => handleSuggest('value')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stock-green/10 text-stock-green text-xs font-semibold hover:bg-stock-green/20 transition-colors border border-stock-green/20">
             <Zap size={14} /> Deep Value Picks
@@ -340,7 +340,7 @@ const TodayPage = () => {
           
           {suggestData && (
             <button onClick={() => setShowSuggestModal(true)} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-bg text-text-muted text-xs hover:text-white transition-colors border border-dark-border hover:border-text-muted">
-              Xem lại kết quả
+              View Last Result
             </button>
           )}
         </div>
