@@ -15,7 +15,7 @@ export default function StockDetailPage() {
   const { user } = useAuth();
   const [ticker, setTicker] = useState(paramTicker?.toUpperCase() || 'AAPL');
   const [stockInfo, setStockInfo] = useState(null);
-  
+
   // AI Analysis State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisData, setAnalysisData] = useState(null);
@@ -31,7 +31,7 @@ export default function StockDetailPage() {
         }
       })
       .catch(console.error);
-      
+
     // Reset AI state on ticker change
     setAnalysisData(null);
     setShowReport(false);
@@ -42,7 +42,7 @@ export default function StockDetailPage() {
       setShowReport(true);
       return;
     }
-    
+
     setIsAnalyzing(true);
     try {
       const headers = { 'Content-Type': 'application/json' };
@@ -77,13 +77,13 @@ export default function StockDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4 bg-dark-card p-3 rounded-xl border border-dark-border shadow-sm">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => navigate('/screener')}
               className="p-2 hover:bg-dark-hover rounded-lg transition-colors text-text-muted hover:text-white"
             >
               <ArrowLeft size={20} />
             </button>
-            
+
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-white tracking-tight">{ticker}</h1>
@@ -92,25 +92,24 @@ export default function StockDetailPage() {
                     {stockInfo.company}
                   </span>
                 )}
-                
+
                 {/* AI Analysis Button */}
                 <button
                   onClick={runAiAnalysis}
                   disabled={isAnalyzing}
-                  className={`ml-4 px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-bold transition-all shadow-sm ${
-                    isAnalyzing 
-                      ? 'bg-dark-bg border border-dark-border text-text-muted cursor-wait' 
-                      : analysisData 
+                  className={`ml-4 px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-bold transition-all shadow-sm ${isAnalyzing
+                      ? 'bg-dark-bg border border-dark-border text-text-muted cursor-wait'
+                      : analysisData
                         ? 'bg-primary/20 border border-primary/40 text-primary hover:bg-primary/30'
                         : 'bg-gradient-to-r from-primary to-purple-500 hover:from-primary-hover hover:to-purple-600 text-white border border-transparent shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]'
-                  }`}
+                    }`}
                 >
                   {isAnalyzing ? (
                     <><Loader2 size={16} className="animate-spin" /> Analyzing...</>
                   ) : analysisData ? (
                     <><BrainCircuit size={16} /> View AI Report</>
                   ) : (
-                    <><BrainCircuit size={16} /> AI Analysis (4 Masters)</>
+                    <><BrainCircuit size={16} /> AI Analysis</>
                   )}
                 </button>
               </div>
@@ -119,7 +118,7 @@ export default function StockDetailPage() {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6">
             <div className="text-right">
               <div className="text-2xl font-bold text-white font-mono">
@@ -135,24 +134,24 @@ export default function StockDetailPage() {
 
         {/* Main Content Area */}
         <div className="flex flex-col w-full">
-          
+
           {/* Chart Panel */}
           <div className="w-full h-[600px] lg:min-h-[750px]">
             <StockChartPanel ticker={ticker} />
           </div>
-          
+
           {/* Bottom Panel: News (Formerly Sidebar) */}
           <div className="w-full">
             <StockSidebar ticker={ticker} stockInfo={stockInfo} />
           </div>
-          
+
         </div>
       </div>
 
-      <AiAnalysisReport 
-        isOpen={showReport} 
-        onClose={() => setShowReport(false)} 
-        data={analysisData} 
+      <AiAnalysisReport
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+        data={analysisData}
       />
     </PageLayout>
   );

@@ -18,7 +18,7 @@ export default function WatchlistPage() {
 
   useEffect(() => {
     // Fetch stock details to enrich the watchlist
-    fetch(`${API_URL}/api/stocks`)
+    fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/stocks`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setStockData(data);

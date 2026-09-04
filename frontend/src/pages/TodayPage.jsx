@@ -313,8 +313,23 @@ const TodayPage = () => {
                 const text = suggestPrompt.toLowerCase();
                 let screen = 'quality_growth';
                 let theme = null;
+                
+                // Screen parsing
                 if (text.includes('value')) screen = 'value';
-                if (text.includes('công nghệ') || text.includes('ai') || text.includes('tech')) theme = 'ai';
+                else if (text.includes('growth')) screen = 'growth';
+                else if (text.includes('momentum')) screen = 'momentum';
+                else if (text.includes('dividend') && text.includes('safe')) screen = 'dividend_safety';
+                
+                // Theme parsing
+                if (text.includes('ai') || text.includes('tech') || text.includes('công nghệ')) theme = 'ai';
+                else if (text.includes('cloud')) theme = 'cloud';
+                else if (text.includes('cybersecurity') || text.includes('bảo mật')) theme = 'cybersecurity';
+                else if (text.includes('ev') || text.includes('xe điện')) theme = 'ev';
+                else if (text.includes('health') || text.includes('y tế')) theme = 'healthcare_innovation';
+                else if (text.includes('energy') || text.includes('năng lượng')) theme = 'energy';
+                else if (text.includes('dividend') || text.includes('cổ tức')) theme = 'dividend';
+                else if (text.includes('fintech') || text.includes('tài chính')) theme = 'fintech';
+                
                 handleSuggest(screen, theme);
               }
             }}
