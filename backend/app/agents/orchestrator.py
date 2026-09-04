@@ -35,6 +35,88 @@ def _save_to_db(ticker: str, result: dict, user_id: str = None):
         return None
 
 
+def _build_price_levels(raw_data: dict, calc_result: dict, actionable: dict) -> list:
+    """
+    Collect all significant price levels from multiple sources.
+    Each level has: price, type, source, label — for drawing on TradingView chart.
+    """
+    levels = []
+    price = raw_data.get("price", {}).get("current", 0)
+    tech = calc_result.get("technical", {})
+    dcf = calc_result.get("dcf", {})
+    analyst = raw_data.get("analyst", {})
+
+    if price:
+        levels.append({"price": price, "type": "current", "source": "market",
+                        "label": f"Current ${price}"})
+
+    for s in tech.get("support", []):
+        levels.append({"price": s, "type": "support", "source": "technical",
+                        "label": f"Support ${s} (1Y local minimum)"})
+
+    for r in tech.get("resistance", []):
+        levels.append({"price": r, "type": "resistance", "source": "technical",
+                        "label": f"Resistance ${r} (1Y local maximum)"})
+
+    sma50 = tech.get("sma50")
+    sma200 = tech.get("sma200")
+    if sma50:
+        levels.append({"price": round(sma50, 2), "type": "sma", "source": "technical",
+                        "label": f"SMA50 ${round(sma50, 2)}"})
+    if sma200:
+        levels.append({"price": round(sma200, 2), "type": "sma", "source": "technical",
+                        "label": f"SMA200 ${round(sma200, 2)}"})
+
+    fair_value = dcf.get("fair_value")
+    if fair_value:
+        levels.append({"price": round(fair_value, 2), "type": "fair_value", "source": "dcf",
+                        "label": f"DCF Fair Value ${round(fair_value, 2)}"})
+
+    scenarios = dcf.get("scenarios", {})
+    for scenario_name, sc_data in scenarios.items():
+        sv = sc_data.get("fair_value")
+        if sv:
+            levels.append({"price": round(sv, 2), "type": "scenario",
+                            "source": f"dcf_{scenario_name}",
+                            "label": f"DCF {scenario_name.capitalize()} ${round(sv, 2)}"})
+
+    target_mean = analyst.get("target_mean")
+    target_low = analyst.get("target_low")
+    target_high = analyst.get("target_high")
+    if target_mean:
+        levels.append({"price": round(target_mean, 2), "type": "analyst_target",
+                        "source": "analyst_consensus",
+                        "label": f"Analyst Target ${round(target_mean, 2)}"})
+    if target_low:
+        levels.append({"price": round(target_low, 2), "type": "analyst_low",
+                        "source": "analyst_consensus",
+                        "label": f"Analyst Low ${round(target_low, 2)}"})
+    if target_high:
+        levels.append({"price": round(target_high, 2), "type": "analyst_high",
+                        "source": "analyst_consensus",
+                        "label": f"Analyst High ${round(target_high, 2)}"})
+
+    if actionable:
+        entry = actionable.get("entry_price")
+        tp = actionable.get("target_price")
+        sl = actionable.get("stop_loss")
+        if entry:
+            levels.append({"price": entry, "type": "entry", "source": "ai_setup",
+                            "label": f"Entry ${entry}",
+                            "reasoning": actionable.get("entry_reasoning", "")})
+        if tp:
+            levels.append({"price": tp, "type": "take_profit", "source": "ai_setup",
+                            "label": f"Target ${tp}",
+                            "reasoning": actionable.get("target_reasoning", "")})
+        if sl:
+            levels.append({"price": sl, "type": "stop_loss", "source": "ai_setup",
+                            "label": f"Stop Loss ${sl}",
+                            "reasoning": actionable.get("stop_reasoning", "")})
+
+    levels.sort(key=lambda x: x["price"])
+    return levels
+
+
 def analyze_stock(ticker: str, user_id: str = None, save: bool = True) -> dict:
     """
     UC1 full pipeline. Returns structured analysis result.
@@ -59,8 +141,21 @@ def analyze_stock(ticker: str, user_id: str = None, save: bool = True) -> dict:
 
     # Assemble full_report_markdown
     synthesis = analyst_result.get("synthesis", {})
+    actionable = synthesis.get("actionable_setup", {})
+
     md_report = f"## {ticker} — {synthesis.get('decision', 'N/A')}\n\n"
     md_report += f"**Thesis:** {synthesis.get('thesis', '')}\n\n"
+
+    if actionable:
+        md_report += "### Actionable Setup\n"
+        md_report += f"| | Price | Reasoning |\n|---|---|---|\n"
+        md_report += f"| **Entry** | ${actionable.get('entry_price', 'N/A')} | {actionable.get('entry_reasoning', '')} |\n"
+        md_report += f"| **Target** | ${actionable.get('target_price', 'N/A')} | {actionable.get('target_reasoning', '')} |\n"
+        md_report += f"| **Stop Loss** | ${actionable.get('stop_loss', 'N/A')} | {actionable.get('stop_reasoning', '')} |\n\n"
+        md_report += f"Risk/Reward: {actionable.get('risk_reward_ratio', 'N/A')} | "
+        md_report += f"Expected Return: {actionable.get('expected_return_pct', 'N/A')}% | "
+        md_report += f"Max Loss: {actionable.get('max_loss_pct', 'N/A')}%\n\n"
+
     for key, pers in analyst_result.get("perspectives", {}).items():
         name = pers.get("name", key.capitalize())
         stars = pers.get("stars", 3)
@@ -127,6 +222,9 @@ def analyze_stock(ticker: str, user_id: str = None, save: bool = True) -> dict:
         "bull_case": synthesis.get("bull_case", []),
         "bear_case": synthesis.get("bear_case", []),
         "catalysts": raw_data.get("company", {}).get("catalysts", []),
+
+        "actionable_setup": actionable,
+        "price_levels": _build_price_levels(raw_data, calc_result, actionable),
 
         "quality": calc_result.get("quality", {}),
         "technical": calc_result.get("technical", {}),
