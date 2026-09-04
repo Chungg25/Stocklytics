@@ -356,9 +356,9 @@ def _ai_synthesize(tickers: list, rankings: dict, anomalies: list,
         support = tech.get("support")
         resistance = tech.get("resistance")
         if support:
-            ticker_details += f"\nSupport: ${round(support, 2)}"
+            ticker_details += f"\nSupport: {', '.join(f'${s}' for s in support)}"
         if resistance:
-            ticker_details += f"\nResistance: ${round(resistance, 2)}"
+            ticker_details += f"\nResistance: {', '.join(f'${r}' for r in resistance)}"
 
     hist_text = ""
     if historical:
@@ -508,6 +508,7 @@ def compare(tickers: list[str], auto_peers: bool = False) -> dict:
     # Sort results to match input order
     ticker_order = {t: i for i, t in enumerate(tickers)}
     results.sort(key=lambda r: ticker_order.get(r["ticker"], 999))
+    results = _clean_nan(results)
 
     # Code-based analysis (all deterministic)
     rankings = _build_rankings(results)
