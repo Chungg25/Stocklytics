@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2 } from 'lucide-react';
+import { Home, ChevronRight, LayoutList, Grid, Plus, ChevronDown, Search, Loader2, Sparkles, Trophy, Cpu, Zap } from 'lucide-react';
 import StockTable from '../components/screener/StockTable';
 import StockGrid from '../components/screener/StockGrid';
 import PageLayout from '../components/layout/PageLayout';
+import AISuggestionModal from '../components/screener/AISuggestionModal';
 
 const FilterButton = ({ label, icon: Icon, rightIcon: RightIcon, active }) => (
   <button className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium border transition-colors
@@ -139,6 +140,34 @@ const TodayPage = () => {
   // Parametric Filters State (e.g. { price: {min: 10, max: 100}, change: {min: 5, max: null} })
   const [activeFilters, setActiveFilters] = useState({});
   
+  // AI Suggestion State
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [suggestData, setSuggestData] = useState(null);
+  const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
+  const [suggestPrompt, setSuggestPrompt] = useState("");
+
+  const handleSuggest = async (screen = "quality_growth", theme = null) => {
+    setIsLoadingSuggest(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/analysis/suggest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ screen, theme })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        setSuggestData(result.data);
+        setShowSuggestModal(true);
+      } else {
+        alert("Error: " + result.detail);
+      }
+    } catch (e) {
+      alert("Failed to fetch suggestions.");
+    } finally {
+      setIsLoadingSuggest(false);
+    }
+  };
+  
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -271,6 +300,52 @@ const TodayPage = () => {
         <span className="text-text-primary">Stock Screener</span>
       </div>
 
+      {/* AI Command Bar */}
+      <div className="bg-dark-card border border-dark-border rounded-xl p-4 mb-8">
+        <div className="relative mb-3">
+          <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={20} />
+          <input 
+            type="text" 
+            value={suggestPrompt}
+            onChange={e => setSuggestPrompt(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                const text = suggestPrompt.toLowerCase();
+                let screen = 'quality_growth';
+                let theme = null;
+                if (text.includes('value')) screen = 'value';
+                if (text.includes('công nghệ') || text.includes('ai') || text.includes('tech')) theme = 'ai';
+                handleSuggest(screen, theme);
+              }
+            }}
+            placeholder="Hỏi AI (VD: Tóm tắt danh mục siêu cổ phiếu Công nghệ...)" 
+            className="w-full bg-[#0D111A] border border-dark-border rounded-xl py-3 pl-12 pr-12 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all shadow-inner"
+          />
+          {isLoadingSuggest && (
+            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-primary animate-spin" size={20} />
+          )}
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-text-muted mr-2 font-medium">Gợi ý nhanh:</span>
+          <button onClick={() => handleSuggest('quality_growth')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors border border-primary/20">
+            <Trophy size={14} /> Tóm tắt Quality Growth
+          </button>
+          <button onClick={() => handleSuggest('growth', 'ai')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#8b5cf6]/10 text-[#8b5cf6] text-xs font-semibold hover:bg-[#8b5cf6]/20 transition-colors border border-[#8b5cf6]/20">
+            <Cpu size={14} /> Danh mục Tech & AI
+          </button>
+          <button onClick={() => handleSuggest('value')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stock-green/10 text-stock-green text-xs font-semibold hover:bg-stock-green/20 transition-colors border border-stock-green/20">
+            <Zap size={14} /> Deep Value Picks
+          </button>
+          
+          {suggestData && (
+            <button onClick={() => setShowSuggestModal(true)} className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-bg text-text-muted text-xs hover:text-white transition-colors border border-dark-border hover:border-text-muted">
+              Xem lại kết quả
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Header Info */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
         <div>
@@ -394,6 +469,12 @@ const TodayPage = () => {
         )}
       </div>
 
+      {/* AI Suggestion Modal */}
+      <AISuggestionModal 
+        isOpen={showSuggestModal} 
+        onClose={() => setShowSuggestModal(false)} 
+        data={suggestData} 
+      />
     </PageLayout>
   );
 };

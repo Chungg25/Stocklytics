@@ -48,19 +48,6 @@ const TopNav = () => {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2 bg-dark-bg border border-dark-border rounded-lg px-3 py-1.5 w-64">
-          <Search size={16} className="text-text-muted" />
-          <input className="bg-transparent text-sm text-white placeholder-text-muted outline-none w-full" placeholder="Search 10,000+ stocks..." />
-        </div>
-        
-        <button 
-          onClick={toggleAgent}
-          className={`p-2 rounded-lg flex items-center gap-2 transition-colors ${isAgentOpen ? 'bg-primary/20 text-primary' : 'hover:bg-dark-hover text-text-muted hover:text-text-primary'}`}
-        >
-          <Bot size={18} />
-          <span className="text-sm font-semibold hidden md:inline">Copilot</span>
-        </button>
-
         <button className="p-2 rounded-lg hover:bg-dark-hover text-text-muted hover:text-text-primary transition-colors">
           <Settings size={18} />
         </button>
