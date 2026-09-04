@@ -24,6 +24,7 @@ SCREENING_PRESETS = {
             "roe_min": 0.15,
             "rev_growth_min": 0.15,
             "piotroski_min": 6,
+            "dcf_upside_min": 0.05,
             "rsi_min": 30,
             "rsi_max": 70,
         },
@@ -45,6 +46,7 @@ SCREENING_PRESETS = {
         "filters": {
             "rev_growth_min": 0.20,
             "profit_margin_positive": True,
+            "dcf_upside_min": 0.05,
             "rsi_min": 40,
             "trend_bullish": True,
         },
@@ -57,6 +59,7 @@ SCREENING_PRESETS = {
             "rsi_min": 50,
             "rsi_max": 75,
             "sma_above_200": True,
+            "dcf_upside_min": 0.05,
             "score_min": 55,
         },
     },
@@ -67,6 +70,7 @@ SCREENING_PRESETS = {
             "dividend_yield_min": 0.015,
             "piotroski_min": 6,
             "altman_z_min": 2.0,
+            "dcf_upside_min": 0.05,
             "beta_max": 1.2,
         },
     },
@@ -179,8 +183,8 @@ def _passes_filters(result: dict, filters: dict, sector_pe_median: float = None)
     if "fcf_yield_min" in filters:
         fcf_yield = f.get("free_cash_flow_yield") or f.get("fcf_yield")
         if fcf_yield is None:
-            mcap = p.get("market_cap", 0)
-            fcf = f.get("free_cash_flow", 0)
+            mcap = p.get("market_cap") or 0
+            fcf = f.get("free_cash_flow") or 0
             fcf_yield = fcf / mcap if mcap and mcap > 0 else 0
         if fcf_yield < filters["fcf_yield_min"]:
             return False
