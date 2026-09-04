@@ -165,17 +165,23 @@ const AISuggestionModal = ({ isOpen, onClose, data }) => {
                   {/* Trading Setup */}
                   <div className="grid grid-cols-4 gap-2 bg-dark-bg p-3 rounded-lg border border-dark-border/50">
                     <div>
-                      <p className="text-[10px] text-text-muted uppercase">Entry</p>
+                      <p className="text-[10px] text-text-muted uppercase">
+                        {pick.action === 'WATCH' ? 'Current' : 'Entry'}
+                      </p>
                       <p className="text-sm font-mono text-white">${pick.entry_price || pick.price}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-muted uppercase">Target</p>
+                      <p className="text-[10px] text-text-muted uppercase">
+                        {pick.action === 'WATCH' ? 'Fair Value' : 'Target'}
+                      </p>
                       <p className={`text-sm font-mono ${pick.expected_return_pct > 0 ? 'text-stock-green' : pick.expected_return_pct < 0 ? 'text-stock-red' : 'text-white'}`}>
                         ${pick.target_price || 'N/A'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-muted uppercase">Stop</p>
+                      <p className="text-[10px] text-text-muted uppercase">
+                        {pick.action === 'WATCH' ? 'Support' : 'Stop'}
+                      </p>
                       <p className="text-sm font-mono text-stock-red">${pick.stop_loss || 'N/A'}</p>
                     </div>
                     <div className="text-right">
