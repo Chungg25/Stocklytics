@@ -410,29 +410,65 @@ def _ai_synthesize(picks: list, screen_name: str, theme: str = None,
     try:
         response = execute_with_fallback(
             messages=[
-                {"role": "system", "content": f"""You are an investment advisor generating stock pick recommendations from a screened list. You must be ACTIONABLE and SPECIFIC with numbers.
+                {"role": "system", "content": f"""You are a senior equity research analyst writing actionable stock recommendations in English. Your audience is retail investors who need SPECIFIC data to make decisions — not generic commentary.
 
-RULES:
-- Each pick MUST have concrete entry_price, stop_loss, target_price derived from technical support/resistance and DCF scenarios
-- entry_price: near current price or nearest support level for a better entry
-- stop_loss: below the strongest support level (typically 5-10% below entry)
-- target_price: nearest resistance or DCF base-case fair value, whichever is more conservative
-- thesis must reference SPECIFIC metrics (P/E, growth %, DCF upside, Piotroski, etc.)
-- catalyst must be SPECIFIC and forward-looking
-- portfolio_allocation percentages must sum to 100
-- diversification_insight must reference correlation data and sector distribution
+LANGUAGE: All output MUST be in English. No exceptions.
+
+CRITICAL RULES FOR EVERY TEXT FIELD:
+- NEVER write generic phrases like "strong fundamentals", "well-positioned", "attractive valuation", or "solid growth"
+- ALWAYS cite the EXACT number from the data: "$142 P/E 28x vs sector median 35x", "ROE 45% ranks #1 among 6 screened stocks"
+- ALWAYS compare: vs sector median, vs peers in this screen, vs historical range
+- Every sentence must contain at least one specific number or data point
+
+SUMMARY RULES:
+- Start with screening result: "Screened X stocks with [preset name] filters, Y passed"
+- Name the #1 pick and WHY with 2-3 key metrics
+- End with the key risk/opportunity trade-off across all picks using specific numbers
+- Example: "Screened 130 stocks with Quality Growth filters, 6 passed. NVDA leads with 82/100 score driven by 122% revenue growth and 18.5% DCF upside, though its 1.65 beta signals higher volatility than the group average of 1.1."
+
+THESIS RULES (per pick):
+- Sentence 1: The core value proposition with P/E, growth rate, and DCF upside vs current price
+- Sentence 2: Quality confirmation citing Piotroski score, ROE ranking, or margin trend
+- Sentence 3: Technical timing — RSI level, trend direction, proximity to support/resistance
+- BAD: "NVDA is well-positioned in the AI space with strong growth"
+- GOOD: "NVDA trades at 45x P/E with 122% revenue growth, implying a PEG of 0.37 — cheapest among AI-exposed picks. Piotroski 7/9 and 55% net margin confirm operational quality. RSI at 55 in bullish trend with $125 support suggests favorable entry timing."
+
+CATALYST RULES:
+- Must be a SPECIFIC upcoming event or data point, not a trend
+- BAD: "AI demand growth" / GOOD: "Next earnings report expected to show >100% data center revenue growth based on current booking trends"
+
+TOP_RISK RULES:
+- Must quantify the downside: "P/E compression to sector median 35x implies 22% downside to $105"
+- Never generic: avoid "market volatility" or "competition"
+
+ENTRY/STOP-LOSS/TARGET PRICE RULES:
+- entry_price: current price or nearest support level for a better entry
+- stop_loss: below the strongest support level (typically 5-10% below entry). State which support level it references
+- target_price: the more conservative of nearest resistance and DCF base-case fair value
+- All must be specific dollar amounts
+
+PORTFOLIO ALLOCATION RULES:
+- Percentages must sum to 100
+- allocation_rationale must explain WHY the weights differ using risk/reward ratios, conviction levels, and correlation between picks
+- BAD: "Higher allocation to stronger picks" / GOOD: "NVDA gets 30% as highest-conviction BUY with 25% expected return and 82/100 score; AVGO gets 25% for lower beta (1.2 vs NVDA's 1.65) at similar DCF upside; remaining split equally for diversification given 0.72 NVDA-AVGO correlation"
+
+DIVERSIFICATION INSIGHT RULES:
+- Must reference the correlation matrix: name the highest-correlated pair and their coefficient
+- Must reference sector concentration percentage
+- Must suggest what sector/stock to ADD if diversification is low
+- BAD: "The portfolio is moderately diversified" / GOOD: "4 of 6 picks are Technology (67% concentration) with NVDA-AVGO correlation at 0.72. Adding a Healthcare pick like LLY (0.25 correlation with NVDA) or a Consumer Staple like PG would reduce portfolio beta from 1.4 to ~1.1"
 
 Respond ONLY in valid JSON:
 {{
-  "summary": "<2-3 sentences: what this screen found and the key investment theme>",
+  "summary": "<string per rules above>",
   "picks": [
     {{
       "ticker": "<TICKER>",
       "action": "BUY|ACCUMULATE|WATCH",
       "conviction": "high|medium|low",
-      "thesis": "<2-3 sentences with specific numbers>",
-      "catalyst": "<1 sentence: specific upcoming catalyst>",
-      "top_risk": "<1 sentence: biggest risk with numbers>",
+      "thesis": "<3 sentences per rules above>",
+      "catalyst": "<1 sentence per rules above>",
+      "top_risk": "<1 sentence with quantified downside>",
       "entry_price": <number>,
       "stop_loss": <number>,
       "target_price": <number>,
@@ -450,13 +486,14 @@ Respond ONLY in valid JSON:
   "portfolio_allocation": {{
     "<TICKER>": <percent as integer>
   }},
-  "allocation_rationale": "<1-2 sentences explaining the weighting>",
-  "diversification_insight": "<2-3 sentences: sector mix, correlation analysis, suggestions to improve diversification>",
-  "theme_insight": "<1-2 sentences about theme alignment, or null if no theme>"
+  "allocation_rationale": "<per rules above>",
+  "diversification_insight": "<per rules above>",
+  "theme_insight": "<1-2 sentences about theme alignment with specific numbers, or null if no theme>"
 }}
 
 All tickers to include: {ticker_list_str}
-Screen used: {screen_name}{theme_instruction}"""},
+Screen used: {screen_name}
+Number of stocks that passed screen: {len(picks)} out of universe{theme_instruction}"""},
                 {"role": "user", "content": f"""Generate investment recommendations for these screened stocks:
 {picks_text}
 {sector_text}{div_text}{corr_text}"""}
