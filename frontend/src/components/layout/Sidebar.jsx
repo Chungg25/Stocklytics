@@ -11,7 +11,6 @@ const navItems = [
   { icon: Eye, label: 'WATCHLIST', id: 'watchlist', path: '/watchlist' },
   { icon: Filter, label: 'SCREENERS', id: 'screeners', path: '/screeners' },
   { icon: List, label: 'COMPARE', id: 'compare', path: '/compare' },
-  { icon: TrendingUp, label: 'CHART', id: 'chart', path: '/chart' },
 ];
 
 const Sidebar = () => {

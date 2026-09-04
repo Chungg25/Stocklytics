@@ -38,9 +38,6 @@ const TopNav = () => {
           <Link to="/screeners" className="hover:text-primary transition-colors flex items-center gap-1">
             AI Picks <span className="text-primary text-xs">✦</span>
           </Link>
-          <Link to="/chart" className="hover:text-primary transition-colors flex items-center gap-1">
-            Tools <ChevronDown size={14} />
-          </Link>
           <Link to="/screeners" className="hover:text-primary transition-colors flex items-center gap-1">
             Best Stocks <ChevronDown size={14} />
           </Link>
