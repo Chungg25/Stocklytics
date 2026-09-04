@@ -42,7 +42,7 @@ const AISuggestionModal = ({ isOpen, onClose, data }) => {
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8">
           
           {/* Strategy & Allocation */}
           <section className="bg-dark-card border border-dark-border rounded-xl p-6">
