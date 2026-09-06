@@ -198,37 +198,80 @@ def _synthesize(ticker: str, perspectives: dict, score_result: dict,
         analysis = result.get("analysis", "N/A")
         perspectives_text += f"\n{name} ({stars}/5 stars):\n{analysis}\n"
 
+    tech = calc_result.get("technical", {})
+    support_levels = tech.get("support", [])
+    resistance_levels = tech.get("resistance", [])
+    dcf_scenarios = dcf.get("scenarios", {})
+    analyst_data = raw_data.get("analyst", {})
+
+    support_text = ", ".join(f"${s}" for s in support_levels) if support_levels else "N/A"
+    resistance_text = ", ".join(f"${r}" for r in resistance_levels) if resistance_levels else "N/A"
+
+    scenarios_text = ""
+    if dcf_scenarios:
+        for label, sc in dcf_scenarios.items():
+            fv = sc.get("fair_value", "N/A")
+            scenarios_text += f"\n  DCF {label}: ${fv}"
+
     try:
         response = execute_with_fallback(
             messages=[
-                {"role": "system", "content": """You are the Team Lead synthesizing 4 investment perspectives into a final verdict.
-You have pre-calculated scores and 4 expert analyses. Your job is to:
-1. Write a one-sentence thesis (50-100 chars)
-2. Create bull case (5 points) and bear case (5 points) — these should show REAL TENSION between perspectives
-3. Set 3-scenario target prices based on the DCF and analyst targets provided
+                {"role": "system", "content": """You are the Team Lead synthesizing 4 investment perspectives into a final verdict. All output MUST be in English with SPECIFIC numbers — no generic commentary.
+
+Your job:
+1. Write a one-sentence thesis (50-100 chars) with the key number that matters most
+2. Create bull case (5 points) and bear case (5 points) — each point must cite a specific metric
+3. Set 3-scenario target prices based on DCF scenarios and analyst targets provided
 4. Make a final decision: Pass / Conditional Pass / Gray Zone
-5. Write a concise summary paragraph (100-200 words)
+5. Write a concise summary paragraph (100-200 words) with specific numbers throughout
+
+6. CRITICAL — ACTIONABLE SETUP: You MUST produce a trading setup based on the technical and fundamental data:
+   - recommendation: "BUY" if DCF upside >5% AND score >=60, "WATCH" if mixed signals, "AVOID" if downside
+   - entry_price: current price or nearest support for a better entry. MUST cite which support level or why current price
+   - target_price: the more conservative of DCF base-case fair value and nearest resistance. MUST cite the source
+   - stop_loss: below the deepest support level (5-10% below entry). MUST cite which support level
+   - For EACH price level, explain WHERE it comes from (e.g. "Support at $125 from 3-month local minimum", "Target $165 from DCF base-case fair value", "Stop at $118 = 6% below $125 support")
 
 Respond ONLY in valid JSON:
 {
-  "thesis": "<one sentence investment thesis>",
-  "bull_case": ["<point1>", "<point2>", "<point3>", "<point4>", "<point5>"],
-  "bear_case": ["<point1>", "<point2>", "<point3>", "<point4>", "<point5>"],
+  "thesis": "<one sentence investment thesis with key number>",
+  "bull_case": ["<point with specific metric>", ...5 points],
+  "bear_case": ["<point with specific metric>", ...5 points],
   "scenarios": {
     "bull": {"price": <number>, "probability": "<pct>"},
     "base": {"price": <number>, "probability": "<pct>"},
     "bear": {"price": <number>, "probability": "<pct>"}
   },
   "decision": "<Pass / Conditional Pass / Gray Zone>",
-  "action": "<specific actionable recommendation>",
-  "summary": "<100-200 word synthesis paragraph>"
+  "action": "<specific actionable recommendation with price levels>",
+  "summary": "<100-200 word synthesis with specific numbers>",
+  "actionable_setup": {
+    "recommendation": "BUY|WATCH|AVOID",
+    "entry_price": <number>,
+    "entry_reasoning": "<1 sentence: source of entry price, e.g. 'Current price near $132 support from 2-month local minimum'>",
+    "target_price": <number>,
+    "target_reasoning": "<1 sentence: source, e.g. 'DCF base-case fair value $165 (WACC 9.2%, 5Y growth 18%)'>",
+    "stop_loss": <number>,
+    "stop_reasoning": "<1 sentence: source, e.g. '$118 is 6% below $125 support, the deepest 1Y local minimum'>",
+    "risk_reward_ratio": "<string like '1:2.5'>",
+    "expected_return_pct": <number>,
+    "max_loss_pct": <number>
+  }
 }"""},
                 {"role": "user", "content": f"""Ticker: {ticker}
 Current Price: ${p.get('current', 'N/A')}
 AI Score: {score_result.get('total_score', 'N/A')}/100 ({score_result.get('rating', 'N/A')})
 DCF Fair Value: ${dcf.get('fair_value', 'N/A')}
-Analyst Target: ${raw_data.get('analyst', {}).get('target_mean', 'N/A')}
+DCF Scenarios:{scenarios_text if scenarios_text else ' N/A'}
+Analyst Target Mean: ${analyst_data.get('target_mean', 'N/A')}
+Analyst Target Range: ${analyst_data.get('target_low', 'N/A')} — ${analyst_data.get('target_high', 'N/A')}
 Composite Stars: {round(composite, 2)}/5
+
+TECHNICAL LEVELS (from scipy local extrema on 1Y daily prices):
+  Support levels: {support_text}
+  Resistance levels: {resistance_text}
+  RSI: {tech.get('rsi', 'N/A')} | Trend: {tech.get('trend', 'N/A')}
+  SMA50: ${tech.get('sma50', 'N/A')} | SMA200: ${tech.get('sma200', 'N/A')}
 
 4 EXPERT PERSPECTIVES:
 {perspectives_text}
