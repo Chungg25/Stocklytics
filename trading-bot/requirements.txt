@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+pydantic>=2.7
+pandas>=2.2
+numpy
+yfinance
+matplotlib
+httpx
+sqlalchemy>=2.0
+psycopg[binary]
+apscheduler>=3.10,<4
+mcp>=2.3,<3
+anyio
+cryptography
+docker>=7
+segno
+python-dotenv

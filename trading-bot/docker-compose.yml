@@ -1,0 +1,23 @@
+services:
+  stockbot:
+    build: .
+    container_name: stockbot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Hermes containers reach the MCP server over the shared Docker network.
+      HERMES_DOCKER_NETWORK: stockbot-net
+      INTERNAL_MCP_URL: http://stockbot:8100/mcp
+      HERMES_DATA_ROOT: /var/lib/stockbot/hermes
+    ports:
+      - "8100:8100"
+    volumes:
+      # Same absolute path on host and in this container, so bind mounts given to Hermes containers resolve.
+      - /var/lib/stockbot/hermes:/var/lib/stockbot/hermes
+      # Lets the provisioner start one Hermes container per user. Only this service gets the socket.
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [stockbot-net]
+
+networks:
+  stockbot-net:
+    name: stockbot-net

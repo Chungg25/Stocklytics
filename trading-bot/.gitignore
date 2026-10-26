@@ -1,0 +1,3 @@
+stockbot.db
+.env
+.pytest_cache/
