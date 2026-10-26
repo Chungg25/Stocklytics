@@ -10,7 +10,8 @@ services:
       INTERNAL_MCP_URL: http://stockbot:8100/mcp
       HERMES_DATA_ROOT: /var/lib/stockbot/hermes
     ports:
-      - "8100:8100"
+      # Local only: expose to the internet through an HTTPS reverse proxy (see README "Host").
+      - "127.0.0.1:8100:8100"
     volumes:
       # Same absolute path on host and in this container, so bind mounts given to Hermes containers resolve.
       - /var/lib/stockbot/hermes:/var/lib/stockbot/hermes
